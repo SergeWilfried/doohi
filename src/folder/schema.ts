@@ -3,10 +3,10 @@ import { z } from "zod";
 
 // Custom Zod transformer for monetary values
 const monetaryString = () => z.string()
-  .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-    message: "Must be a valid positive number"
+  .refine(val => !Number.isNaN(Number.parseFloat(val)) && Number.parseFloat(val) > 0, {
+    message: 'Must be a valid positive number',
   })
-  .transform((val) => parseFloat(val));
+  .transform(val => Number.parseFloat(val));
 
 // User preferences schema - more specific than Record<string, any>
 const preferencesSchema = z.object({
