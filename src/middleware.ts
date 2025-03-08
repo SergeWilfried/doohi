@@ -25,7 +25,7 @@ const aj = arcjet({
   rules: [
     // Protect against common attacks with Arcjet Shield
     shield({
-      mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
+      mode: "DRY_RUN", // will block requests. Use "DRY_RUN" to log only
     }),
   ],
 });
