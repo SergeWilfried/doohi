@@ -28,6 +28,17 @@ export const tagSchema = z.object({
   name: z.string().min(1).max(100),
 });
 
+
+// Social links schema for more specific validation
+const socialLinksSchema = z.object({
+  website: z.string().url().optional(),
+  twitter: z.string().url().optional(),
+  facebook: z.string().url().optional(),
+  linkedin: z.string().url().optional(),
+  instagram: z.string().url().optional(),
+  github: z.string().url().optional(),
+}).catchall(z.string().url()); // Allow other social networks while ensuring they are URLs
+
 export const organizationSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().max(1000).optional().nullable(),
@@ -35,6 +46,7 @@ export const organizationSchema = z.object({
   contactPhone: z.string().max(20).optional().nullable(),
   websiteUrl: z.string().url().optional().nullable(),
   logoUrl: z.string().url().optional().nullable(),
+  socialLinks: socialLinksSchema.optional(),
   verified: z.boolean().default(false),
 });
 
@@ -57,15 +69,6 @@ export const publisherSchema = z.object({
   socialLinks: z.record(z.string().url()).optional().nullable(),
 });
 
-// Social links schema for more specific validation
-const socialLinksSchema = z.object({
-  website: z.string().url().optional(),
-  twitter: z.string().url().optional(),
-  facebook: z.string().url().optional(),
-  linkedin: z.string().url().optional(),
-  instagram: z.string().url().optional(),
-  github: z.string().url().optional(),
-}).catchall(z.string().url()); // Allow other social networks while ensuring they are URLs
 
 export const projectSchema = z.object({
   title: z.string().min(1).max(255),
