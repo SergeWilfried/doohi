@@ -1,5 +1,5 @@
 import '@/styles/global.css';
-import { ThemeProvider } from "@/components/theme-provider"
+import { Providers } from "@/components/theme-provider"
 
 import type { Metadata } from 'next';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
@@ -57,7 +57,7 @@ export default function RootLayout(props: {
   return (
     <html lang={props.params.locale} suppressHydrationWarning>
       <body className={`bg-background text-foreground ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`} suppressHydrationWarning>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <Providers>
 
         {/* PRO: Dark mode support for Shadcn UI */}
         <NextIntlClientProvider
@@ -68,7 +68,7 @@ export default function RootLayout(props: {
 
           <DemoBadge />
         </NextIntlClientProvider>
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
