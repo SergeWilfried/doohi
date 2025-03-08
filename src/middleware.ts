@@ -1,3 +1,4 @@
+import arcjet, { shield } from "@arcjet/next";
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import {
   type NextFetchEvent,
@@ -12,6 +13,20 @@ const intlMiddleware = createMiddleware({
   locales: AllLocales,
   localePrefix: AppConfig.localePrefix,
   defaultLocale: AppConfig.defaultLocale,
+});
+
+
+const aj = arcjet({
+  // Get your site key from https://app.arcjet.com
+  // and set it as an environment variable rather than hard coding.
+  // See: https://nextjs.org/docs/app/building-your-application/configuring/environment-variables
+  key: process.env.ARCJET_KEY!,
+  rules: [
+    // Protect against common attacks with Arcjet Shield
+    shield({
+      mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
+    }),
+  ],
 });
 
 const isProtectedRoute = createRouteMatcher([
@@ -32,9 +47,13 @@ export default function middleware(
     || request.nextUrl.pathname.includes('/sign-up')
     || isProtectedRoute(request)
   ) {
-    return clerkMiddleware((auth, req) => {
+    return clerkMiddleware(async (auth, req) => {
       const authObj = auth();
+      const decision = await aj.protect(req);
 
+      if (decision.isDenied()) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
       if (isProtectedRoute(req)) {
         const locale
           = req.nextUrl.pathname.match(/(\/.*)\/dashboard/)?.at(1) ?? '';
