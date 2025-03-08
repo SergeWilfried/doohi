@@ -8,10 +8,8 @@ import {
   uniqueIndex,
   pgEnum,
   boolean,
-  foreignKey,
   index,
   json,
-  varchar,
   uuid,
 } from 'drizzle-orm/pg-core';
 
