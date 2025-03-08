@@ -1,13 +1,17 @@
 import '@/styles/global.css';
+import { ThemeProvider } from "@/components/theme-provider"
 
 import type { Metadata } from 'next';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { unstable_setRequestLocale } from 'next-intl/server';
-
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { DemoBadge } from '@/components/DemoBadge';
 import { AllLocales } from '@/utils/AppConfig';
 
 export const metadata: Metadata = {
+  title: "Crowdfunding Central",
+  description: "Support our community projects",
   icons: [
     {
       rel: 'apple-touch-icon',
@@ -52,7 +56,9 @@ export default function RootLayout(props: {
   // which dynamically adds a `style` attribute to the body tag.
   return (
     <html lang={props.params.locale} suppressHydrationWarning>
-      <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
+      <body className={`bg-background text-foreground ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`} suppressHydrationWarning>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+
         {/* PRO: Dark mode support for Shadcn UI */}
         <NextIntlClientProvider
           locale={props.params.locale}
@@ -62,6 +68,7 @@ export default function RootLayout(props: {
 
           <DemoBadge />
         </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
