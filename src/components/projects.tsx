@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookOpen, Leaf, Cpu, Palette, Heart, Users, LayoutGrid } from "lucide-react"
 import { DonationOverlay } from "@/components/donation-overlay"
 import { PublisherCard } from "@/components/publisher-card"
-import projectsData from "@/data/projects.json"
+import projectsData from "@/data/project.json"
 
 const categoryIcons = {
   All: LayoutGrid,
