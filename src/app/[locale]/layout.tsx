@@ -6,7 +6,6 @@ import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { unstable_setRequestLocale } from 'next-intl/server';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import { DemoBadge } from '@/components/DemoBadge';
 import { AllLocales } from '@/utils/AppConfig';
 
 export const metadata: Metadata = {
@@ -64,9 +63,11 @@ export default function RootLayout(props: {
           locale={props.params.locale}
           messages={messages}
         >
-          {props.children}
-
-          <DemoBadge />
+           <div className="min-h-screen bg-background text-foreground">
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="max-w-4xl mx-auto">{props.children}</div>
+            </main>
+          </div>
         </NextIntlClientProvider>
         </Providers>
       </body>
