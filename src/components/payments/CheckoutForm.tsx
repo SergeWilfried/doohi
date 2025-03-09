@@ -13,6 +13,7 @@ import getStripe from '@/utils/get-stripejs';
 import { formatAmountForDisplay } from '@/utils/stripe-helpers';
 import { AMOUNT_STEP, CURRENCY, MAX_AMOUNT, MIN_AMOUNT } from '@/utils/StripeConfig';
 
+import { Button } from '../ui/button';
 import { CustomDonationInput } from './CustomDonationInput';
 import StripeTestCards from './StripeTestCards';
 
@@ -63,7 +64,7 @@ export default function CheckoutForm(props: CheckoutFormProps): JSX.Element {
           value={input.customDonation}
         />
         <StripeTestCards />
-        <button
+        <Button
           className="checkout-style-background"
           type="submit"
           disabled={loading}
@@ -71,7 +72,7 @@ export default function CheckoutForm(props: CheckoutFormProps): JSX.Element {
           Donate
           {' '}
           {formatAmountForDisplay(input.customDonation, CURRENCY)}
-        </button>
+        </Button>
       </form>
       {clientSecret
         ? (
