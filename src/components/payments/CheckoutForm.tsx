@@ -1,3 +1,4 @@
+/* eslint-disable tailwindcss/no-custom-classname */
 'use client';
 
 import {
@@ -9,6 +10,7 @@ import {
 import type { StripeError } from '@stripe/stripe-js';
 import * as React from 'react';
 
+import { createPaymentIntent } from '@/app/actions/stripe';
 import getStripe from '@/utils/get-stripejs';
 import { formatAmountForDisplay } from '@/utils/stripe-helpers';
 import * as config from '@/utils/StripeConfig';
@@ -34,6 +36,7 @@ function CheckoutForm(): JSX.Element {
   const stripe = useStripe();
   const elements = useElements();
 
+  // eslint-disable-next-line react/no-nested-components
   const PaymentStatus = ({ status }: { status: string }) => {
     switch (status) {
       case 'processing':
