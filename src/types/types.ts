@@ -1,5 +1,6 @@
-import type { currencyEnum, fulfillmentStatusEnum, mediaTypeEnum, moderationStatusEnum, notificationTypeEnum, projectStatusEnum, publisherTypeEnum, userRoleEnum } from "@/models/Schema";
-import type { EnumValues } from "./Enum";
+import type { currencyEnum, fulfillmentStatusEnum, mediaTypeEnum, moderationStatusEnum, notificationTypeEnum, projectStatusEnum, publisherTypeEnum, userRoleEnum } from '@/models/Schema';
+
+import type { EnumValues } from './Enum';
 
 // Enum types using the utility type
 export type UserRole = EnumValues<typeof userRoleEnum>;
@@ -11,31 +12,30 @@ export type Currency = EnumValues<typeof currencyEnum>;
 export type NotificationType = EnumValues<typeof notificationTypeEnum>;
 export type MediaType = EnumValues<typeof mediaTypeEnum>;
 
-
 // Common timestamp fields interface
-export interface Timestamps {
+export type Timestamps = {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
-}
+};
 
 // Categories
-export interface Category extends Timestamps {
+export type Category = {
   id: string;
   name: string;
   description: string | null;
   iconUrl: string | null;
   displayOrder: number | null;
-}
+} & Timestamps;
 
 // Tags
-export interface Tag extends Timestamps {
+export type Tag = {
   id: string;
   name: string;
-}
+} & Timestamps;
 
 // Organizations
-export interface Organization extends Timestamps {
+export type Organization = {
   id: string;
   name: string;
   description: string | null;
@@ -44,19 +44,19 @@ export interface Organization extends Timestamps {
   websiteUrl: string | null;
   logoUrl: string | null;
   verified: boolean;
-}
+} & Timestamps;
 
 // Extended Organization with Stripe fields
-export interface OrganizationWithStripe extends Organization {
+export type OrganizationWithStripe = {
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   stripeSubscriptionPriceId: string | null;
   stripeSubscriptionStatus: string | null;
   stripeSubscriptionCurrentPeriodEnd: number | null;
-}
+} & Organization;
 
 // Users
-export interface User extends Timestamps {
+export type User = {
   id: string;
   name: string;
   email: string;
@@ -73,17 +73,17 @@ export interface User extends Timestamps {
   bio: string | null;
   preferences: Record<string, any> | null;
   lastLoginAt: Date | null;
-}
+} & Timestamps;
 
 // User follows
-export interface UserFollow extends Timestamps {
+export type UserFollow = {
   id: string;
   followerId: string;
   followingId: string;
-}
+} & Timestamps;
 
 // Publishers
-export interface Publisher extends Timestamps {
+export type Publisher = {
   id: string;
   name: string;
   description: string;
@@ -94,10 +94,10 @@ export interface Publisher extends Timestamps {
   yearFounded: number;
   socialLinks: Record<string, string> | null;
   verified: boolean;
-}
+} & Timestamps;
 
 // Projects
-export interface Project extends Timestamps {
+export type Project = {
   id: string;
   title: string;
   subtitle: string | null;
@@ -118,10 +118,10 @@ export interface Project extends Timestamps {
   conversionRate: string;
   risks: string | null;
   faq: Array<{ question: string; answer: string }> | null;
-}
+} & Timestamps;
 
 // Project media
-export interface ProjectMedia extends Timestamps {
+export type ProjectMedia = {
   id: string;
   projectId: string;
   mediaType: MediaType;
@@ -129,27 +129,27 @@ export interface ProjectMedia extends Timestamps {
   title: string | null;
   description: string | null;
   displayOrder: number | null;
-}
+} & Timestamps;
 
 // Project tags
-export interface ProjectTag extends Timestamps {
+export type ProjectTag = {
   id: string;
   projectId: string;
   tagId: string;
-}
+} & Timestamps;
 
 // Backers
-export interface Backer extends Timestamps {
+export type Backer = {
   id: string;
   userId: string | null;
   totalAmountPledged: string;
   projectsBacked: number;
   bio: string | null;
   preferences: Record<string, any> | null;
-}
+} & Timestamps;
 
 // Addresses
-export interface Address extends Timestamps {
+export type Address = {
   id: string;
   userId: string;
   name: string;
@@ -161,10 +161,10 @@ export interface Address extends Timestamps {
   country: string;
   phone: string | null;
   isDefault: boolean;
-}
+} & Timestamps;
 
 // Rewards
-export interface Reward extends Timestamps {
+export type Reward = {
   id: string;
   projectId: string;
   title: string;
@@ -177,29 +177,29 @@ export interface Reward extends Timestamps {
   shippingRequired: boolean;
   shippingRestrictions: Record<string, any> | null;
   fulfillmentStatus: FulfillmentStatus;
-}
+} & Timestamps;
 
 // Comments
-export interface Comment extends Timestamps {
+export type Comment = {
   id: string;
   projectId: string;
   userId: string;
   commentText: string;
   parentCommentId: string | null;
   moderationStatus: ModerationStatus;
-}
+} & Timestamps;
 
 // Updates
-export interface Update extends Timestamps {
+export type Update = {
   id: string;
   projectId: string;
   title: string;
   updateText: string;
   isPublic: boolean;
-}
+} & Timestamps;
 
 // Contributions
-export interface Contribution extends Timestamps {
+export type Contribution = {
   id: string;
   backerId: string;
   projectId: string;
@@ -212,10 +212,10 @@ export interface Contribution extends Timestamps {
   transactionId: string | null;
   paymentStatus: string;
   refunded: boolean;
-}
+} & Timestamps;
 
 // Notifications
-export interface Notification extends Timestamps {
+export type Notification = {
   id: string;
   userId: string;
   type: NotificationType;
@@ -223,10 +223,10 @@ export interface Notification extends Timestamps {
   message: string;
   read: boolean;
   data: Record<string, any> | null;
-}
+} & Timestamps;
 
 // Analytics events
-export interface AnalyticsEvent {
+export type AnalyticsEvent = {
   id: string;
   userId: string | null;
   projectId: string | null;
@@ -235,10 +235,10 @@ export interface AnalyticsEvent {
   ipAddress: string | null;
   userAgent: string | null;
   createdAt: Date;
-}
+};
 
 // View interfaces
-export interface ProjectFundingStatus {
+export type ProjectFundingStatus = {
   id: string;
   title: string;
   goal: string;
@@ -248,9 +248,9 @@ export interface ProjectFundingStatus {
   endDate: Date;
   fundingStatus: 'fully funded' | 'in progress' | 'unfunded' | 'unknown';
   fundingPercentage: string;
-}
+};
 
-export interface ProjectStatistics {
+export type ProjectStatistics = {
   id: string;
   title: string;
   backerCount: number;
@@ -267,4 +267,4 @@ export interface ProjectStatistics {
   createdAt: Date;
   endDate: Date;
   daysRemaining: number;
-}
+};
