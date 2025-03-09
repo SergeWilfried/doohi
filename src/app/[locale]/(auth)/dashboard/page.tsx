@@ -23,7 +23,13 @@ const DashboardIndexPage = () => {
           Logout
         </Button>
       </div>
-      <DashboardPage sessionId={sessionId!} userId={userId!} />
+      {sessionId && userId ? (
+        <DashboardPage sessionId={sessionId} userId={userId} />
+      ) : (
+        <div className="p-4 text-center">
+          {t('authentication_required')}
+        </div>
+      )}
     </>
   );
 };
