@@ -1,38 +1,69 @@
-import Cors from 'micro-cors';
+/* eslint-disable no-console */
+import { NextResponse } from 'next/server';
+import type { Stripe } from 'stripe';
 
 import { Env } from '@/libs/Env';
+import { stripe } from '@/libs/stripe';
 
-const webhookSecret: string = Env.STRIPE_WEBHOOK_SECRET!;
+export async function POST(req: Request) {
+  let event: Stripe.Event;
 
-// Stripe requires the raw body to construct the event.
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+  try {
+    event = stripe.webhooks.constructEvent(
+      await (await req.blob()).text(),
+      req.headers.get('stripe-signature') as string,
+      Env.STRIPE_WEBHOOK_SECRET as string,
+    );
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    // On error, log and return the error message.
+    if (err! instanceof Error) {
+      console.log(err);
+    }
+    console.log(`❌ Error message: ${errorMessage}`);
+    return NextResponse.json(
+      { message: `Webhook Error: ${errorMessage}` },
+      { status: 400 },
+    );
+  }
 
-const cors = Cors({
-  allowMethods: ['POST', 'HEAD'],
-});
+  // Successfully constructed event.
+  console.log('✅ Success:', event.id);
 
-const webhookHandler = async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method === 'POST') {
-    const buf = await buffer(req);
-    const sig = req.headers['stripe-signature']!;
+  const permittedEvents: string[] = [
+    'checkout.session.completed',
+    'payment_intent.succeeded',
+    'payment_intent.payment_failed',
+  ];
 
-    let event: Stripe.Event;
+  if (permittedEvents.includes(event.type)) {
+    let data;
 
     try {
-      event = stripe.webhooks.constructEvent(buf.toString(), sig, webhookSecret);
-    } catch (err) {
-      // On error, log and return the error message
-      console.log(`❌ Error message: ${err.message}`);
-      res.status(400).send(`Webhook Error: ${err.message}`);
-      return;
+      switch (event.type) {
+        case 'checkout.session.completed':
+          data = event.data.object as Stripe.Checkout.Session;
+          console.log(`💰 CheckoutSession status: ${data.payment_status}`);
+          break;
+        case 'payment_intent.payment_failed':
+          data = event.data.object as Stripe.PaymentIntent;
+          console.log(`❌ Payment failed: ${data.last_payment_error?.message}`);
+          break;
+        case 'payment_intent.succeeded':
+          data = event.data.object as Stripe.PaymentIntent;
+          console.log(`💰 PaymentIntent status: ${data.status}`);
+          break;
+        default:
+          throw new Error(`Unhandled event: ${event.type}`);
+      }
+    } catch (error) {
+      console.log(error);
+      return NextResponse.json(
+        { message: 'Webhook handler failed' },
+        { status: 500 },
+      );
     }
-
-    // Successfully constructed event
-    console.log('✅ Success:', event.id);
   }
-};
-export default cors(webhookHandler as any);
+  // Return a response to acknowledge receipt of the event.
+  return NextResponse.json({ message: 'Received' }, { status: 200 });
+}

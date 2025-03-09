@@ -16,7 +16,7 @@ import { formatAmountForDisplay } from '@/utils/stripe-helpers';
 import * as config from '@/utils/StripeConfig';
 
 import { Button } from '../ui/button';
-import CustomDonationInput from './CustomDonationInput';
+import { CustomDonationInput } from './CustomDonationInput';
 import StripeTestCards from './StripeTestCards';
 
 function CheckoutForm(): JSX.Element {
@@ -66,7 +66,7 @@ function CheckoutForm(): JSX.Element {
   const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     setInput({
       ...input,
-      [e.currentTarget.name]: e.currentTarget.value,
+      [e.currentTarget.name]: Number.parseFloat(e.currentTarget.value),
     });
 
     elements?.update({ amount: input.customDonation * 100 });
