@@ -1,5 +1,6 @@
-import { currencyEnum, publisherTypeEnum, userRoleEnum } from "@/models/Schema";
-import { z } from "zod";
+import { z } from 'zod';
+
+import { currencyEnum, publisherTypeEnum, userRoleEnum } from '@/models/Schema';
 
 // Custom Zod transformer for monetary values
 const monetaryString = () => z.string()
@@ -27,7 +28,6 @@ export const categorySchema = z.object({
 export const tagSchema = z.object({
   name: z.string().min(1).max(100),
 });
-
 
 // Social links schema for more specific validation
 const socialLinksSchema = z.object({
@@ -69,7 +69,6 @@ export const publisherSchema = z.object({
   socialLinks: z.record(z.string().url()).optional().nullable(),
 });
 
-
 export const projectSchema = z.object({
   title: z.string().min(1).max(255),
   subtitle: z.string().max(255).optional().nullable(),
@@ -77,7 +76,7 @@ export const projectSchema = z.object({
   goal: monetaryString(), // Using custom transformer
   minimumPledge: monetaryString(), // Using custom transformer
   currency: z.enum(currencyEnum.enumValues).optional(),
-  endDate: z.date().refine((date) => date > new Date(), { message: "End date must be in the future" }),
+  endDate: z.date().refine(date => date > new Date(), { message: 'End date must be in the future' }),
   publisherId: z.string().uuid().optional().nullable(),
   categoryId: z.string().uuid().optional().nullable(),
   publisherType: z.enum(publisherTypeEnum.enumValues).default('user'),
@@ -85,7 +84,7 @@ export const projectSchema = z.object({
   risks: z.string().optional().nullable(),
   faq: z.array(z.object({
     question: z.string().min(1),
-    answer: z.string().min(1)
+    answer: z.string().min(1),
   })).optional().nullable(),
 });
 

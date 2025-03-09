@@ -1,4 +1,4 @@
-import arcjet, { shield } from "@arcjet/next";
+import arcjet, { shield } from '@arcjet/next';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import {
   type NextFetchEvent,
@@ -7,15 +7,14 @@ import {
 } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 
+import { Env } from './libs/Env';
 import { AllLocales, AppConfig } from './utils/AppConfig';
-import { Env } from "./libs/Env";
 
 const intlMiddleware = createMiddleware({
   locales: AllLocales,
   localePrefix: AppConfig.localePrefix,
   defaultLocale: AppConfig.defaultLocale,
 });
-
 
 const aj = arcjet({
   // Get your site key from https://app.arcjet.com
@@ -25,7 +24,7 @@ const aj = arcjet({
   rules: [
     // Protect against common attacks with Arcjet Shield
     shield({
-      mode: "DRY_RUN", // will block requests. Use "DRY_RUN" to log only
+      mode: 'DRY_RUN', // will block requests. Use "DRY_RUN" to log only
     }),
   ],
 });
@@ -53,7 +52,7 @@ export default function middleware(
       const decision = await aj.protect(req);
 
       if (decision.isDenied()) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
       if (isProtectedRoute(req)) {
         const locale

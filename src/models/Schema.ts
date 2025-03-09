@@ -1,15 +1,15 @@
 import {
   bigint,
-  pgTable,
-  text,
-  numeric,
-  integer,
-  timestamp,
-  uniqueIndex,
-  pgEnum,
   boolean,
   index,
+  integer,
   json,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -43,7 +43,7 @@ export const categoriesSchema = pgTable(
     iconUrl: text('icon_url'),
     displayOrder: integer('display_order'),
     ...timestamps,
-  }
+  },
 );
 
 // Tags table
@@ -53,7 +53,7 @@ export const tagsSchema = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull().unique(),
     ...timestamps,
-  }
+  },
 );
 
 // Organizations table
@@ -69,7 +69,7 @@ export const organizationsSchema = pgTable(
     logoUrl: text('logo_url'),
     verified: boolean('verified').default(false),
     ...timestamps,
-  }
+  },
 );
 export const organizationSchema = pgTable(
   'organization',
@@ -126,7 +126,7 @@ export const usersSchema = pgTable(
     return {
       emailIdx: uniqueIndex('email_idx').on(table.email),
     };
-  }
+  },
 );
 
 // User follows table
@@ -144,7 +144,7 @@ export const userFollowsSchema = pgTable(
       followingIdx: index('following_idx').on(table.followingId),
       uniqueFollowIdx: uniqueIndex('unique_follow_idx').on(table.followerId, table.followingId),
     };
-  }
+  },
 );
 
 // Publishers table
@@ -162,7 +162,7 @@ export const publishersSchema = pgTable(
     socialLinks: json('social_links'),
     verified: boolean('verified').default(false),
     ...timestamps,
-  }
+  },
 );
 
 // Projects table
@@ -199,7 +199,7 @@ export const projectsSchema = pgTable(
       featuredIdx: index('idx_projects_featured').on(table.featured),
       endDateIdx: index('idx_projects_end_date').on(table.endDate),
     };
-  }
+  },
 );
 
 // Project media table
@@ -219,7 +219,7 @@ export const projectMediaSchema = pgTable(
     return {
       projectIdIdx: index('idx_project_media_project_id').on(table.projectId),
     };
-  }
+  },
 );
 
 // Project tags table (many-to-many)
@@ -237,7 +237,7 @@ export const projectTagsSchema = pgTable(
       tagIdIdx: index('idx_project_tags_tag_id').on(table.tagId),
       uniqueProjectTagIdx: uniqueIndex('unique_project_tag_idx').on(table.projectId, table.tagId),
     };
-  }
+  },
 );
 
 // Backers table
@@ -256,7 +256,7 @@ export const backersSchema = pgTable(
     return {
       userIdIdx: index('idx_backers_user_id').on(table.userId),
     };
-  }
+  },
 );
 
 // Addresses table
@@ -280,7 +280,7 @@ export const addressesSchema = pgTable(
     return {
       userIdIdx: index('idx_addresses_user_id').on(table.userId),
     };
-  }
+  },
 );
 
 // Rewards table
@@ -305,7 +305,7 @@ export const rewardsSchema = pgTable(
     return {
       projectIdIdx: index('idx_rewards_project_id').on(table.projectId),
     };
-  }
+  },
 );
 
 // First declare the table type
@@ -327,7 +327,7 @@ export const commentsSchema = pgTable(
       userIdIdx: index('idx_comments_user_id').on(table.userId),
       parentCommentIdIdx: index('idx_comments_parent_comment_id').on(table.parentCommentId),
     };
-  }
+  },
 );
 
 // Updates table
@@ -345,7 +345,7 @@ export const updatesSchema = pgTable(
     return {
       projectIdIdx: index('idx_updates_project_id').on(table.projectId),
     };
-  }
+  },
 );
 
 // Contributions table
@@ -372,7 +372,7 @@ export const contributionsSchema = pgTable(
       projectIdIdx: index('idx_contributions_project_id').on(table.projectId),
       rewardIdIdx: index('idx_contributions_reward_id').on(table.rewardId),
     };
-  }
+  },
 );
 
 // Notifications table
@@ -393,7 +393,7 @@ export const notificationsSchema = pgTable(
       userIdIdx: index('idx_notifications_user_id').on(table.userId),
       readIdx: index('idx_notifications_read').on(table.read),
     };
-  }
+  },
 );
 
 // Analytics events table
@@ -416,7 +416,7 @@ export const analyticsEventsSchema = pgTable(
       eventTypeIdx: index('idx_analytics_events_event_type').on(table.eventType),
       createdAtIdx: index('idx_analytics_events_created_at').on(table.createdAt),
     };
-  }
+  },
 );
 
 // View for project funding status
@@ -440,7 +440,7 @@ export const projectFundingStatusView = {
       (p.raised / p.goal * 100)::numeric(5,2) AS funding_percentage
     FROM projects p
     WHERE p.deleted_at IS NULL
-  `
+  `,
 };
 
 // View for project statistics
@@ -474,6 +474,5 @@ export const projectStatisticsView = {
     LEFT JOIN updates u ON p.id = u.project_id AND u.deleted_at IS NULL
     WHERE p.deleted_at IS NULL
     GROUP BY p.id, p.title, p.goal, p.raised, p.currency, p.status, p.created_at, p.end_date, p.view_count, p.conversion_rate
-  `
+  `,
 };
-
