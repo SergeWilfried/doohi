@@ -2,9 +2,9 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
+import DashboardPage from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
 import { TitleBar } from '@/features/dashboard/TitleBar';
-import DashboardPage from '@/templates/dashboard';
 
 const DashboardIndexPage = () => {
   const t = useTranslations('DashboardIndex');
