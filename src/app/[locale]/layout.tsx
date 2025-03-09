@@ -6,8 +6,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { unstable_setRequestLocale } from 'next-intl/server';
 
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
+import { Providers } from '@/components/theme-provider';
 import { AllLocales } from '@/utils/AppConfig';
 
 export const metadata: Metadata = {
@@ -60,17 +59,17 @@ export default function RootLayout(props: {
       <body className={`bg-background text-foreground ${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
 
-        {/* PRO: Dark mode support for Shadcn UI */}
-        <NextIntlClientProvider
-          locale={props.params.locale}
-          messages={messages}
-        >
-           <div className="min-h-screen bg-background text-foreground">
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="max-w-4xl mx-auto">{props.children}</div>
-            </main>
-          </div>
-        </NextIntlClientProvider>
+          {/* PRO: Dark mode support for Shadcn UI */}
+          <NextIntlClientProvider
+            locale={props.params.locale}
+            messages={messages}
+          >
+            <div className="min-h-screen bg-background text-foreground">
+              <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-4xl">{props.children}</div>
+              </main>
+            </div>
+          </NextIntlClientProvider>
         </Providers>
       </body>
     </html>

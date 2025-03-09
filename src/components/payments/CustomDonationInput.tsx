@@ -28,7 +28,7 @@ export default function CustomDonationInput({
       -
       {formatAmountForDisplay(max, currency)}
       ):
-      <Input
+      <input
         type="range"
         name={name}
         min={min}
@@ -37,8 +37,7 @@ export default function CustomDonationInput({
         onChange={onChange}
         value={value}
         className={className}
-      >
-      </Input>
+      />
     </label>
   );
 }
