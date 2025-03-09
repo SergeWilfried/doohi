@@ -8,7 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-export function EditProjectOverlay({ project, onClose, onUpdate }: { project: any; onClose: any; onUpdate: any }) {
+interface EditProjectProps {
+  project: {
+    title: string;
+    description: string;
+    goal: number;
+    category: string;
+    // add other fields as needed
+  };
+  onClose: () => void;
+  onUpdate: (updatedProject: EditProjectProps['project']) => void;
+}
+
+export function EditProjectOverlay({ project, onClose, onUpdate }: EditProjectProps) {
+  // function implementation here
+}
   const [editedProject, setEditedProject] = useState(project);
 
   const handleInputChange = (e: any) => {
