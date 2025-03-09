@@ -2,200 +2,87 @@
 'use client';
 
 import {
-  Elements,
-  PaymentElement,
-  useElements,
-  useStripe,
+  EmbeddedCheckout,
+  EmbeddedCheckoutProvider,
 } from '@stripe/react-stripe-js';
-import type { StripeError } from '@stripe/stripe-js';
-import * as React from 'react';
+import React, { useState } from 'react';
+import type Stripe from 'stripe';
 
-import { createPaymentIntent } from '@/app/actions/stripe';
+import { createCheckoutSession } from '@/app/actions/stripe';
 import getStripe from '@/utils/get-stripejs';
 import { formatAmountForDisplay } from '@/utils/stripe-helpers';
-import * as config from '@/utils/StripeConfig';
+import { AMOUNT_STEP, CURRENCY, MAX_AMOUNT, MIN_AMOUNT } from '@/utils/StripeConfig';
 
-import { Button } from '../ui/button';
 import { CustomDonationInput } from './CustomDonationInput';
 import StripeTestCards from './StripeTestCards';
 
-function CheckoutForm(): JSX.Element {
-  const [input, setInput] = React.useState<{
-    customDonation: number;
-    cardholderName: string;
-  }>({
-    customDonation: Math.round(config.MAX_AMOUNT / config.AMOUNT_STEP),
-    cardholderName: '',
+type CheckoutFormProps = {
+  uiMode: Stripe.Checkout.SessionCreateParams.UiMode;
+};
+
+export default function CheckoutForm(props: CheckoutFormProps): JSX.Element {
+  const [loading] = useState<boolean>(false);
+  const [input, setInput] = useState<{ customDonation: number }>({
+    customDonation: Math.round(MAX_AMOUNT / AMOUNT_STEP),
   });
-  const [paymentType, setPaymentType] = React.useState<string>('');
-  const [payment, setPayment] = React.useState<{
-    status: 'initial' | 'processing' | 'error';
-  }>({ status: 'initial' });
-  const [errorMessage, setErrorMessage] = React.useState<string>('');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-  const stripe = useStripe();
-  const elements = useElements();
-
-  // eslint-disable-next-line react/no-nested-components
-  const PaymentStatus = ({ status }: { status: string }) => {
-    switch (status) {
-      case 'processing':
-      case 'requires_payment_method':
-      case 'requires_confirmation':
-        return <h2>Processing...</h2>;
-
-      case 'requires_action':
-        return <h2>Authenticating...</h2>;
-
-      case 'succeeded':
-        return <h2>Payment Succeeded 🥳</h2>;
-
-      case 'error':
-        return (
-          <>
-            <h2>Error 😭</h2>
-            <p className="error-message">{errorMessage}</p>
-          </>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+  const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = (
+    e,
+  ): void =>
     setInput({
       ...input,
-      [e.currentTarget.name]: Number.parseFloat(e.currentTarget.value),
+      [e.currentTarget.name]: e.currentTarget.value,
     });
 
-    elements?.update({ amount: input.customDonation * 100 });
-  };
+  const formAction = async (data: FormData): Promise<void> => {
+    const uiMode = data.get(
+      'uiMode',
+    ) as Stripe.Checkout.SessionCreateParams.UiMode;
+    const { client_secret, url } = await createCheckoutSession(data);
 
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    try {
-      e.preventDefault();
-      // Abort if form isn't valid
-      if (!e.currentTarget.reportValidity()) {
-        return;
-      }
-      if (!elements || !stripe) {
-        return;
-      }
-
-      setPayment({ status: 'processing' });
-
-      const { error: submitError } = await elements.submit();
-
-      if (submitError) {
-        setPayment({ status: 'error' });
-        setErrorMessage(submitError.message ?? 'An unknown error occurred');
-
-        return;
-      }
-
-      // Create a PaymentIntent with the specified amount.
-      const { client_secret: clientSecret } = await createPaymentIntent(
-        new FormData(e.target as HTMLFormElement),
-      );
-
-      // Use your card Element with other Stripe.js APIs
-      const { error: confirmError } = await stripe!.confirmPayment({
-        elements,
-        clientSecret,
-        confirmParams: {
-          return_url: `${window.location.origin}/donate-with-elements/result`,
-          payment_method_data: {
-            billing_details: {
-              name: input.cardholderName,
-            },
-          },
-        },
-      });
-
-      if (confirmError) {
-        setPayment({ status: 'error' });
-        setErrorMessage(confirmError.message ?? 'An unknown error occurred');
-      }
-    } catch (err) {
-      const { message } = err as StripeError;
-
-      setPayment({ status: 'error' });
-      setErrorMessage(message ?? 'An unknown error occurred');
+    if (uiMode === 'embedded') {
+      return setClientSecret(client_secret);
     }
+
+    window.location.assign(url as string);
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
+      <form action={formAction}>
+        <input type="hidden" name="uiMode" value={props.uiMode} />
         <CustomDonationInput
-          className="elements-style"
+          className="checkout-style"
           name="customDonation"
-          value={input.customDonation}
-          min={config.MIN_AMOUNT}
-          max={config.MAX_AMOUNT}
-          step={config.AMOUNT_STEP}
-          currency={config.CURRENCY}
+          min={MIN_AMOUNT}
+          max={MAX_AMOUNT}
+          step={AMOUNT_STEP}
+          currency={CURRENCY}
           onChange={handleInputChange}
+          value={input.customDonation}
         />
         <StripeTestCards />
-        <fieldset className="elements-style">
-          <legend>Your payment details:</legend>
-          {paymentType === 'card'
-            ? (
-                <input
-                  placeholder="Cardholder name"
-                  className="elements-style"
-                  type="Text"
-                  name="cardholderName"
-                  onChange={handleInputChange}
-                  required
-                />
-              )
-            : null}
-          <div className="FormRow elements-style">
-            <PaymentElement
-              onChange={(e) => {
-                setPaymentType(e.value.type);
-              }}
-            />
-          </div>
-        </fieldset>
-        <Button
-          className="elements-style-background"
+        <button
+          className="checkout-style-background"
           type="submit"
-          disabled={
-            !['initial', 'succeeded', 'error'].includes(payment.status)
-            || !stripe
-          }
+          disabled={loading}
         >
           Donate
           {' '}
-          {formatAmountForDisplay(input.customDonation, config.CURRENCY)}
-        </Button>
+          {formatAmountForDisplay(input.customDonation, CURRENCY)}
+        </button>
       </form>
-      <PaymentStatus status={payment.status} />
+      {clientSecret
+        ? (
+            <EmbeddedCheckoutProvider
+              stripe={getStripe()}
+              options={{ clientSecret }}
+            >
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+          )
+        : null}
     </>
-  );
-}
-
-export default function ElementsForm(): JSX.Element {
-  return (
-    <Elements
-      stripe={getStripe()}
-      options={{
-        appearance: {
-          variables: {
-            colorIcon: '#6772e5',
-            fontFamily: 'Roboto, Open Sans, Segoe UI, sans-serif',
-          },
-        },
-        currency: config.CURRENCY,
-        mode: 'payment',
-        amount: Math.round(config.MAX_AMOUNT / config.AMOUNT_STEP),
-      }}
-    >
-      <CheckoutForm />
-    </Elements>
   );
 }
