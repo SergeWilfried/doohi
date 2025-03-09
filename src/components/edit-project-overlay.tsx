@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 
+import type { Project } from '@/types/types';
+
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
@@ -8,13 +10,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 
 type EditProjectProps = {
-  project: {
-    title: string;
-    description: string;
-    goal: number;
-    category: string;
-    // add other fields as needed
-  };
+  project: Project;
   onClose: () => void;
   onUpdate: (updatedProject: EditProjectProps['project']) => void;
 };
