@@ -34,6 +34,8 @@ export type Tag = {
   name: string;
 } & Timestamps;
 
+export type ProjectCategory = 'Education' | 'Community' | 'Technology' | 'Environment' | 'Arts & Culture' | 'Wellness';
+
 // Organizations
 export type Organization = {
   id: string;
@@ -111,6 +113,7 @@ export type Project = {
   status: ProjectStatus;
   featuredImage: string | null;
   publisherId: string | null;
+  category: ProjectCategory; // Use the specific type here
   categoryId: string | null;
   publisherType: PublisherType;
   featured: boolean;

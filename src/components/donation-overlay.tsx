@@ -1,49 +1,58 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import confetti from "canvas-confetti"
+import confetti from 'canvas-confetti';
+import { useState } from 'react';
 
-interface DonationOverlayProps {
-  isOpen: boolean
-  onClose: () => void
-  projectTitle: string
-}
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+type DonationOverlayProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  projectTitle: string;
+};
 
 export function DonationOverlay({ isOpen, onClose, projectTitle }: DonationOverlayProps) {
-  const [step, setStep] = useState(1)
-  const [amount, setAmount] = useState("")
-  const [isAnonymous, setIsAnonymous] = useState(true)
-  const [name, setName] = useState("")
-  const [paymentMethod, setPaymentMethod] = useState<"check" | "credit" | null>(null)
+  const [step, setStep] = useState(1);
+  const [amount, setAmount] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [name, setName] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'check' | 'credit' | null>(null);
 
   const handleNextStep = () => {
-    if (step < 3) setStep(step + 1)
-  }
+    if (step < 3) {
+      setStep(step + 1);
+    }
+  };
 
   const handlePreviousStep = () => {
-    if (step > 1) setStep(step - 1)
-  }
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
 
   const handleSubmit = () => {
     // Here you would handle the actual donation submission
-    console.log("Donation submitted:", { amount, isAnonymous, name, paymentMethod })
+    // eslint-disable-next-line no-console
+    console.log('Donation submitted:', { amount, isAnonymous, name, paymentMethod });
     confetti({
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
-    })
-    onClose()
-  }
+    });
+    onClose();
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Support {projectTitle}</DialogTitle>
+          <DialogTitle>
+            Support
+            {projectTitle}
+          </DialogTitle>
           <DialogDescription>Choose your donation amount and method to support this project.</DialogDescription>
         </DialogHeader>
         {step === 1 && (
@@ -54,7 +63,7 @@ export function DonationOverlay({ isOpen, onClose, projectTitle }: DonationOverl
                 id="amount"
                 placeholder="Enter amount"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={e => setAmount(e.target.value)}
                 type="number"
                 min="1"
               />
@@ -70,14 +79,14 @@ export function DonationOverlay({ isOpen, onClose, projectTitle }: DonationOverl
               <Label>Donation Type</Label>
               <div className="flex space-x-4">
                 <Button
-                  variant={isAnonymous ? "default" : "outline"}
+                  variant={isAnonymous ? 'default' : 'outline'}
                   onClick={() => setIsAnonymous(true)}
                   className="flex-1"
                 >
                   Anonymous
                 </Button>
                 <Button
-                  variant={!isAnonymous ? "default" : "outline"}
+                  variant={!isAnonymous ? 'default' : 'outline'}
                   onClick={() => setIsAnonymous(false)}
                   className="flex-1"
                 >
@@ -88,7 +97,7 @@ export function DonationOverlay({ isOpen, onClose, projectTitle }: DonationOverl
             {!isAnonymous && (
               <div className="space-y-2">
                 <Label htmlFor="name">Your Name</Label>
-                <Input id="name" placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value)} />
+                <Input id="name" placeholder="Enter your name" value={name} onChange={e => setName(e.target.value)} />
               </div>
             )}
             <div className="flex justify-between">
@@ -106,15 +115,15 @@ export function DonationOverlay({ isOpen, onClose, projectTitle }: DonationOverl
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   variant="outline"
-                  className="flex items-center justify-center p-4 h-16"
-                  onClick={() => setPaymentMethod("check")}
+                  className="flex h-16 items-center justify-center p-4"
+                  onClick={() => setPaymentMethod('check')}
                 >
                   Check by Mail
                 </Button>
                 <Button
                   variant="outline"
-                  className="flex items-center justify-center p-4 h-16"
-                  onClick={() => setPaymentMethod("credit")}
+                  className="flex h-16 items-center justify-center p-4"
+                  onClick={() => setPaymentMethod('credit')}
                 >
                   Credit Card
                 </Button>
@@ -132,6 +141,5 @@ export function DonationOverlay({ isOpen, onClose, projectTitle }: DonationOverl
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
