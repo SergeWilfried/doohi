@@ -3,9 +3,9 @@
 import { headers } from 'next/headers';
 import type { Stripe } from 'stripe';
 
-import { CURRENCY } from '@/config';
-import { stripe } from '@/lib/stripe';
+import { stripe } from '@/libs/stripe';
 import { formatAmountForStripe } from '@/utils/stripe-helpers';
+import { CURRENCY } from '@/utils/StripeConfig';
 
 export async function createCheckoutSession(
   data: FormData,
