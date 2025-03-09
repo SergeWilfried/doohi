@@ -1,14 +1,13 @@
 'use client';
-
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 
-interface EditProjectProps {
+type EditProjectProps = {
   project: {
     title: string;
     description: string;
@@ -18,11 +17,11 @@ interface EditProjectProps {
   };
   onClose: () => void;
   onUpdate: (updatedProject: EditProjectProps['project']) => void;
-}
+};
 
-export function EditProjectOverlay({ project, onClose, onUpdate }: EditProjectProps) {
+export function EditProjectOverlay({ project, onClose }: EditProjectProps) {
   // function implementation here
-}
+
   const [editedProject, setEditedProject] = useState(project);
 
   const handleInputChange = (e: any) => {
@@ -32,7 +31,7 @@ export function EditProjectOverlay({ project, onClose, onUpdate }: EditProjectPr
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    onUpdate(editedProject);
+    // onUpdate(editedProject);
   };
 
   return (
