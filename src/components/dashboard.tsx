@@ -123,17 +123,6 @@ export default function DashboardPage({ sessionId, userId }: { sessionId: string
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Button
-          onClick={() => {
-            router.push('/');
-          }}
-        >
-          Logout
-        </Button>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>My Projects</CardTitle>
