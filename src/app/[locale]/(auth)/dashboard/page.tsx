@@ -1,6 +1,5 @@
 import { useTranslations } from 'next-intl';
 
-import { Button } from '@/components/ui/button';
 import { TitleBar } from '@/features/dashboard/TitleBar';
 
 const DashboardIndexPage = () => {
