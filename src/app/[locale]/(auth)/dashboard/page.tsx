@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/nextjs';
 import { useTranslations } from 'next-intl';
 
 import DashboardPage from '@/components/dashboard';
@@ -7,7 +6,6 @@ import { TitleBar } from '@/features/dashboard/TitleBar';
 
 const DashboardIndexPage = () => {
   const t = useTranslations('DashboardIndex');
-  const { sessionId, userId } = useAuth();
 
   return (
     <>
@@ -25,7 +23,7 @@ const DashboardIndexPage = () => {
       </div>
       {sessionId && userId
         ? (
-            <DashboardPage sessionId={sessionId} userId={userId} />
+            <DashboardPage sessionId={""} userId={""} />
           )
         : (
             <div className="p-4 text-center">
