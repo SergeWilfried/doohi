@@ -14,7 +14,6 @@ import {
   Palette,
   Users,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { EditProjectOverlay } from '@/components/edit-project-overlay';
@@ -96,7 +95,6 @@ export default function DashboardPage({ sessionId, userId }: { sessionId: string
   console.warn(sessionId);
   console.warn(userId);
 
-  const router = useRouter();
   const [projects, setProjects] = useState(mockProjects);
   const [donations] = useState(mockDonations);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
