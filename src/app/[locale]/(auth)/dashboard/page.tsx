@@ -21,15 +21,7 @@ const DashboardIndexPage = () => {
           Logout
         </Button>
       </div>
-      {sessionId && userId
-        ? (
-            <DashboardPage sessionId={""} userId={""} />
-          )
-        : (
-            <div className="p-4 text-center">
-              {t('authentication_required')}
-            </div>
-          )}
+       <DashboardPage sessionId={""} userId={""} />        
     </>
   );
 };
