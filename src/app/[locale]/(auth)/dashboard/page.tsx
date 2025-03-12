@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 
 import { TitleBar } from '@/features/dashboard/TitleBar';
 
-const DashboardIndexPage = async () => {
+const DashboardIndexPage = () => {
   const t = useTranslations('DashboardIndex');
 
 
