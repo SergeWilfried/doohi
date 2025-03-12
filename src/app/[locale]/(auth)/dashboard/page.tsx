@@ -10,13 +10,11 @@ const DashboardIndexPage = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between">
         <TitleBar
           title={t('title_bar')}
           description={t('title_bar_description')}
         />
      
-      </div>
       {sessionId && userId
         ? (
             <DashboardPage sessionId={sessionId} userId={userId} />
