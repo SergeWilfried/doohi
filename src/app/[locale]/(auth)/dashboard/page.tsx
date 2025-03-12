@@ -13,12 +13,6 @@ const DashboardIndexPage = () => {
           title={t('title_bar')}
           description={t('title_bar_description')}
         />
-        <Button
-          onClick={() => {
-          }}
-        >
-          Logout
-        </Button>
       </div>
     </>
   );
