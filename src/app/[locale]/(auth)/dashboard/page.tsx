@@ -1,6 +1,5 @@
 import { useTranslations } from 'next-intl';
 
-import DashboardPage from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
 import { TitleBar } from '@/features/dashboard/TitleBar';
 
@@ -21,7 +20,6 @@ const DashboardIndexPage = () => {
           Logout
         </Button>
       </div>
-       <DashboardPage sessionId={""} userId={""} />        
     </>
   );
 };
