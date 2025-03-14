@@ -49,7 +49,7 @@ const Donate: React.FC<DonateProps> = ({
       
       // Create FormData object with donation information
       const formData = new FormData();
-      formData.append('uiMode', 'redirect');
+      formData.append('uiMode', 'hosted');
       formData.append('customDonation', selectedAmount.toString());
       formData.append('currency', CURRENCY);
       formData.append('isRecurring', monthly ? 'true' : 'false');
