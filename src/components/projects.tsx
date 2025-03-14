@@ -10,8 +10,7 @@ import { PublisherCard } from '@/components/publisher-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import projectsData from '@/data/project.json';
-
-import PaymentElementComp from './payments/DonateWithElements';
+import Donate from "@/components/donations-actions"
 
 const categoryIcons = {
   'All': LayoutGrid,
@@ -94,11 +93,12 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         </CardContent>
       </Card>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card>
-          <CardContent className="pt-6">
-            <PaymentElementComp />
-          </CardContent>
-        </Card>
+             <Donate 
+              amountRaised={project.raised}
+              goal={project.goal}
+              daysLeft={project.daysLeft}
+              donations={984}
+            />
         <PublisherCard
           name={project.publisher.name}
           description={project.publisher.description}
