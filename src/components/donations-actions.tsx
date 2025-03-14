@@ -3,18 +3,17 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import type Stripe from 'stripe';
 import { createCheckoutSession } from '@/app/actions/stripe';
 import { CURRENCY } from '@/utils/StripeConfig';
 
-type DonateProps = {
+interface DonateProps {
   amountRaised: number;
   goal: number;
   daysLeft?: number;
   donations?: number;
-};
+}
 
-const Donate = ({
+const Donate: React.FC<DonateProps> = ({
   amountRaised,
   goal,
   daysLeft = 52,
@@ -24,12 +23,12 @@ const Donate = ({
   const progressPercentage = (amountRaised / goal) * 100;
   
   // State management
-  const [loading, setLoading] = useState(false);
-  const [selectedAmount, setSelectedAmount] = useState(100);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedAmount, setSelectedAmount] = useState<number>(100);
   const [processingButton, setProcessingButton] = useState<'oneTime' | 'monthly' | null>(null);
   
   // Format currency values
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -38,12 +37,12 @@ const Donate = ({
   };
 
   // Handle donation amount selection
-  const handleAmountSelect = (amount: number) => {
+  const handleAmountSelect = (amount: number): void => {
     setSelectedAmount(amount);
   };
 
   // Handle payment submission
-  const handlePayment = async (monthly: boolean) => {
+  const handlePayment = async (monthly: boolean): Promise<void> => {
     try {
       setLoading(true);
       setProcessingButton(monthly ? 'monthly' : 'oneTime');
@@ -74,7 +73,7 @@ const Donate = ({
   };
 
   // Handle custom amount input
-  const handleCustomAmount = () => {
+  const handleCustomAmount = (): void => {
     const amount = prompt('Enter custom amount (USD):');
     if (amount) {
       const numAmount = parseInt(amount.replace(/[^0-9]/g, ''));
@@ -109,7 +108,7 @@ const Donate = ({
           <div className="grid grid-cols-4 gap-2">
             <Button 
               variant="outline" 
-              className={selectedAmount === 100 ? "border-emerald-600 bg-emerald-50" : "border-gray-300 hover:bg-gray-50"}
+              className={selectedAmount === 100 ? "border-blue-600 bg-blue-50" : "border-gray-300 hover:bg-gray-50"}
               onClick={() => handleAmountSelect(100)}
               disabled={loading}
             >
@@ -117,7 +116,7 @@ const Donate = ({
             </Button>
             <Button 
               variant="outline" 
-              className={selectedAmount === 500 ? "border-emerald-600 bg-emerald-50" : "border-gray-300 hover:bg-gray-50"}
+              className={selectedAmount === 500 ? "border-blue-600 bg-blue-50" : "border-gray-300 hover:bg-gray-50"}
               onClick={() => handleAmountSelect(500)}
               disabled={loading}
             >
@@ -125,7 +124,7 @@ const Donate = ({
             </Button>
             <Button 
               variant="outline" 
-              className={selectedAmount === 1000 ? "border-emerald-600 bg-emerald-50" : "border-gray-300 hover:bg-gray-50"}
+              className={selectedAmount === 1000 ? "border-blue-600 bg-blue-50" : "border-gray-300 hover:bg-gray-50"}
               onClick={() => handleAmountSelect(1000)}
               disabled={loading}
             >
@@ -144,7 +143,7 @@ const Donate = ({
           {/* Donation Action Buttons */}
           <div className="space-y-3">
             <Button 
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-6"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-6"
               onClick={() => handlePayment(false)}
               disabled={loading}
             >
