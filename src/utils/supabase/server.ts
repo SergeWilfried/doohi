@@ -1,7 +1,8 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { type CookieOptions, createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { Database } from '@/types_db';
+
 import { Env } from '@/libs/Env';
+import type { Database } from '@/types_db';
 
 // Define a function to create a Supabase client for server-side operations
 // The function takes a cookie store created with next/headers cookies as an argument
@@ -25,6 +26,7 @@ export const createClient = () => {
           try {
             cookieStore.set({ name, value, ...options });
           } catch (error) {
+            console.warn(error);
             // If the set method is called from a Server Component, an error may occur
             // This can be ignored if there is middleware refreshing user sessions
           }
@@ -34,11 +36,12 @@ export const createClient = () => {
           try {
             cookieStore.set({ name, value: '', ...options });
           } catch (error) {
+            console.warn(error);
             // If the remove method is called from a Server Component, an error may occur
             // This can be ignored if there is middleware refreshing user sessions
           }
-        }
-      }
-    }
+        },
+      },
+    },
   );
 };

@@ -57,24 +57,11 @@ export const tagsSchema = pgTable(
 );
 
 // Organizations table
-export const organizationsSchema = pgTable(
-  'organizations',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    name: text('name').notNull().unique(),
-    description: text('description'),
-    contactEmail: text('contact_email'),
-    contactPhone: text('contact_phone'),
-    websiteUrl: text('website_url'),
-    logoUrl: text('logo_url'),
-    verified: boolean('verified').default(false),
-    ...timestamps,
-  },
-);
+
 export const organizationSchema = pgTable(
   'organization',
   {
-    id: text('id').primaryKey(),
+    id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull().unique(),
     description: text('description'),
     contactEmail: text('contact_email'),
@@ -109,7 +96,7 @@ export const usersSchema = pgTable(
     email: text('email').notNull(),
     passwordHash: text('password_hash').notNull(),
     role: userRoleEnum('role').notNull().default('backer'),
-    organizationId: uuid('organization_id').references(() => organizationsSchema.id),
+    organizationId: uuid('organization_id').references(() => organizationSchema.id),
     emailVerified: boolean('email_verified').default(false),
     emailVerificationToken: text('email_verification_token'),
     passwordResetToken: text('password_reset_token'),
