@@ -4,289 +4,558 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import type { Database, Tables, TablesInsert } from 'types_db';
 
-type Product = Tables<'products'>;
-type Price = Tables<'prices'>;
+// Define types for your crowdfunding app
+type Project = Tables<'projects'>;
+type Donation = TablesInsert<'donations'>;
+type RecurringDonation = TablesInsert<'recurring_donations'>;
+type Donor = Tables<'donors'>;
 
-// Change to control trial period length
-const TRIAL_PERIOD_DAYS = 0;
+// Configuration
+const DEFAULT_CURRENCY = 'usd';
+const DEFAULT_PAYMENT_METHODS = ['card'];
 
-// Note: supabaseAdmin uses the SERVICE_ROLE_KEY which you must only use in a secure server-side context
-// as it has admin privileges and overwrites RLS policies!
+// Database client
 const supabaseAdmin = createClient<Database>(
   Env.NEXT_PUBLIC_SUPABASE_URL || '',
   Env.SUPABASE_SERVICE_ROLE_KEY || ''
 );
 
-const upsertProductRecord = async (product: Stripe.Product) => {
-  const productData: Product = {
-    id: product.id,
-    active: product.active,
-    name: product.name,
-    description: product.description ?? null,
-    image: product.images?.[0] ?? null,
-    metadata: product.metadata
-  };
+/**
+ * Error handling wrapper for Supabase operations
+ */
+async function safeDbOperation<T>(
+  operation: () => Promise<{ data: T | null; error: any }>,
+  errorMessage: string
+): Promise<T> {
+  const { data, error } = await operation();
+  if (error) throw new Error(errorMessage);
+  return data as T;
+}
 
-  const { error: upsertError } = await supabaseAdmin
-    .from('products')
-    .upsert([productData]);
-  if (upsertError)
-    throw new Error(`Product insert/update failed: ${upsertError.message}`);
-  console.log(`Product inserted/updated: ${product.id}`);
-};
-
-const upsertPriceRecord = async (
-  price: Stripe.Price,
-  retryCount = 0,
-  maxRetries = 3
-) => {
-  const priceData: Price = {
-    id: price.id,
-    product_id: typeof price.product === 'string' ? price.product : '',
-    active: price.active,
-    currency: price.currency,
-    type: price.type,
-    unit_amount: price.unit_amount ?? null,
-    interval: price.recurring?.interval ?? null,
-    interval_count: price.recurring?.interval_count ?? null,
-    trial_period_days: price.recurring?.trial_period_days ?? TRIAL_PERIOD_DAYS
-  };
-
-  const { error: upsertError } = await supabaseAdmin
-    .from('prices')
-    .upsert([priceData]);
-
-  if (upsertError?.message.includes('foreign key constraint')) {
-    if (retryCount < maxRetries) {
-      console.log(`Retry attempt ${retryCount + 1} for price ID: ${price.id}`);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await upsertPriceRecord(price, retryCount + 1, maxRetries);
-    } else {
-      throw new Error(
-        `Price insert/update failed after ${maxRetries} retries: ${upsertError.message}`
-      );
-    }
-  } else if (upsertError) {
-    throw new Error(`Price insert/update failed: ${upsertError.message}`);
-  } else {
-    console.log(`Price inserted/updated: ${price.id}`);
-  }
-};
-
-const deleteProductRecord = async (product: Stripe.Product) => {
-  const { error: deletionError } = await supabaseAdmin
-    .from('products')
-    .delete()
-    .eq('id', product.id);
-  if (deletionError)
-    throw new Error(`Product deletion failed: ${deletionError.message}`);
-  console.log(`Product deleted: ${product.id}`);
-};
-
-const deletePriceRecord = async (price: Stripe.Price) => {
-  const { error: deletionError } = await supabaseAdmin
-    .from('prices')
-    .delete()
-    .eq('id', price.id);
-  if (deletionError) throw new Error(`Price deletion failed: ${deletionError.message}`);
-  console.log(`Price deleted: ${price.id}`);
-};
-
-const upsertCustomerToSupabase = async (uuid: string, customerId: string) => {
-  const { error: upsertError } = await supabaseAdmin
-    .from('customers')
-    .upsert([{ id: uuid, stripe_customer_id: customerId }]);
-
-  if (upsertError)
-    throw new Error(`Supabase customer record creation failed: ${upsertError.message}`);
-
-  return customerId;
-};
-
-const createCustomerInStripe = async (uuid: string, email: string) => {
-  const customerData = { metadata: { supabaseUUID: uuid }, email: email };
-  const newCustomer = await stripe.customers.create(customerData);
-  if (!newCustomer) throw new Error('Stripe customer creation failed.');
-
-  return newCustomer.id;
-};
-
-const createOrRetrieveCustomer = async ({
-  email,
-  uuid
-}: {
-  email: string;
-  uuid: string;
-}) => {
-  // Check if the customer already exists in Supabase
-  const { data: existingSupabaseCustomer, error: queryError } =
-    await supabaseAdmin
-      .from('customers')
-      .select('*')
-      .eq('id', uuid)
-      .maybeSingle();
-
-  if (queryError) {
-    throw new Error(`Supabase customer lookup failed: ${queryError.message}`);
-  }
-
-  // Retrieve the Stripe customer ID using the Supabase customer ID, with email fallback
-  let stripeCustomerId: string | undefined;
-  if (existingSupabaseCustomer?.stripe_customer_id) {
-    const existingStripeCustomer = await stripe.customers.retrieve(
-      existingSupabaseCustomer.stripe_customer_id
+/**
+ * Project Operations
+ */
+const projectService = {
+  async getById(projectId: string): Promise<Project> {
+    return safeDbOperation(
+      () => supabaseAdmin.from('projects').select('*').eq('id', projectId).single(),
+      ''
     );
-    stripeCustomerId = existingStripeCustomer.id;
-  } else {
-    // If Stripe ID is missing from Supabase, try to retrieve Stripe customer ID by email
-    const stripeCustomers = await stripe.customers.list({ email: email });
-    stripeCustomerId =
-      stripeCustomers.data.length > 0 ? stripeCustomers.data[0].id : undefined;
-  }
-
-  // If still no stripeCustomerId, create a new customer in Stripe
-  const stripeIdToInsert = stripeCustomerId
-    ? stripeCustomerId
-    : await createCustomerInStripe(uuid, email);
-  if (!stripeIdToInsert) throw new Error('Stripe customer creation failed.');
-
-  if (existingSupabaseCustomer && stripeCustomerId) {
-    // If Supabase has a record but doesn't match Stripe, update Supabase record
-    if (existingSupabaseCustomer.stripe_customer_id !== stripeCustomerId) {
-      const { error: updateError } = await supabaseAdmin
-        .from('customers')
-        .update({ stripe_customer_id: stripeCustomerId })
-        .eq('id', uuid);
-
-      if (updateError)
-        throw new Error(
-          `Supabase customer record update failed: ${updateError.message}`
-        );
-      console.warn(
-        `Supabase customer record mismatched Stripe ID. Supabase record updated.`
-      );
-    }
-    // If Supabase has a record and matches Stripe, return Stripe customer ID
-    return stripeCustomerId;
-  } else {
-    console.warn(
-      `Supabase customer record was missing. A new record was created.`
+  },
+  
+  async updateFundingAmount(projectId: string, amount: number): Promise<void> {
+    await safeDbOperation(
+      () => supabaseAdmin.from('projects')
+        .update({ 
+          total_raised: supabaseAdmin.rpc('increment_funding', { amount, project_id: projectId })
+        })
+        .eq('id', projectId),
+      'Failed to update funding amount for project ${projectId}'
     );
-
-    // If Supabase has no record, create a new record and return Stripe customer ID
-    const upsertedStripeCustomer = await upsertCustomerToSupabase(
-      uuid,
-      stripeIdToInsert
-    );
-    if (!upsertedStripeCustomer)
-      throw new Error('Supabase customer record creation failed.');
-
-    return upsertedStripeCustomer;
+    console.log('Updated funding amount for project ${projectId} by ${amount}');
   }
 };
 
 /**
- * Copies the billing details from the payment method to the customer object.
+ * Donor Operations
  */
-const copyBillingDetailsToCustomer = async (
-  uuid: string,
-  payment_method: Stripe.PaymentMethod
-) => {
-  //Todo: check this assertion
-  const customer = payment_method.customer as string;
-  const { name, phone, address } = payment_method.billing_details;
-  if (!name || !phone || !address) return;
-  //@ts-ignore
-  await stripe.customers.update(customer, { name, phone, address });
-  const { error: updateError } = await supabaseAdmin
-    .from('users')
-    .update({
-      billing_address: { ...address },
-      payment_method: { ...payment_method[payment_method.type] }
-    })
-    .eq('id', uuid);
-  if (updateError) throw new Error(`Customer update failed: ${updateError.message}`);
-};
-
-const manageSubscriptionStatusChange = async (
-  subscriptionId: string,
-  customerId: string,
-  createAction = false
-) => {
-  // Get customer's UUID from mapping table.
-  const { data: customerData, error: noCustomerError } = await supabaseAdmin
-    .from('customers')
-    .select('id')
-    .eq('stripe_customer_id', customerId)
-    .single();
-
-  if (noCustomerError)
-    throw new Error(`Customer lookup failed: ${noCustomerError.message}`);
-
-  const { id: uuid } = customerData!;
-
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-    expand: ['default_payment_method']
-  });
-  // Upsert the latest status of the subscription object.
-  const subscriptionData: TablesInsert<'subscriptions'> = {
-    id: subscription.id,
-    user_id: uuid,
-    metadata: subscription.metadata,
-    status: subscription.status,
-    price_id: subscription.items.data[0].price.id,
-    //TODO check quantity on subscription
-    // @ts-ignore
-    quantity: subscription.quantity,
-    cancel_at_period_end: subscription.cancel_at_period_end,
-    cancel_at: subscription.cancel_at
-      ? toDateTime(subscription.cancel_at).toISOString()
-      : null,
-    canceled_at: subscription.canceled_at
-      ? toDateTime(subscription.canceled_at).toISOString()
-      : null,
-    current_period_start: toDateTime(
-      subscription.current_period_start
-    ).toISOString(),
-    current_period_end: toDateTime(
-      subscription.current_period_end
-    ).toISOString(),
-    created: toDateTime(subscription.created).toISOString(),
-    ended_at: subscription.ended_at
-      ? toDateTime(subscription.ended_at).toISOString()
-      : null,
-    trial_start: subscription.trial_start
-      ? toDateTime(subscription.trial_start).toISOString()
-      : null,
-    trial_end: subscription.trial_end
-      ? toDateTime(subscription.trial_end).toISOString()
-      : null
-  };
-
-  const { error: upsertError } = await supabaseAdmin
-    .from('subscriptions')
-    .upsert([subscriptionData]);
-  if (upsertError)
-    throw new Error(`Subscription insert/update failed: ${upsertError.message}`);
-  console.log(
-    `Inserted/updated subscription [${subscription.id}] for user [${uuid}]`
-  );
-
-  // For a new subscription copy the billing details to the customer object.
-  // NOTE: This is a costly operation and should happen at the very end.
-  if (createAction && subscription.default_payment_method && uuid)
-    //@ts-ignore
-    await copyBillingDetailsToCustomer(
-      uuid,
-      subscription.default_payment_method as Stripe.PaymentMethod
+const donorService = {
+  async createOrRetrieveDonor({
+    email,
+    userId,
+    name
+  }: {
+    email: string;
+    userId?: string;
+    name?: string;
+  }): Promise<Donor> {
+    try {
+      // Check if donor exists in Supabase by email
+      const { data: existingDonor } = await supabaseAdmin
+        .from('donors')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+      
+      // If donor exists, get or create Stripe customer
+      if (existingDonor) {
+        // If Stripe customer ID exists, retrieve it, otherwise create new
+        const stripeCustomerId = existingDonor.stripe_customer_id || 
+          await this.createStripeCustomer(existingDonor.id, email, name);
+        
+        // If we needed to create a new Stripe customer, update the donor record
+        if (!existingDonor.stripe_customer_id) {
+          await this.updateStripeCustomerId(existingDonor.id, stripeCustomerId);
+        }
+        
+        return existingDonor;
+      }
+      
+      // If donor doesn't exist, create both donor and Stripe customer
+      const donorId = userId || crypto.randomUUID();
+      const stripeCustomerId = await this.createStripeCustomer(donorId, email, name);
+      
+      // Create donor record
+      const newDonor = await safeDbOperation(
+        () => supabaseAdmin.from('donors').insert([{ 
+          id: donorId, 
+          email, 
+          name: name || email.split('@')[0],
+          stripe_customer_id: stripeCustomerId
+        }]),
+        'Donor creation failed for ${email}'
+      );
+      
+      return newDonor;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error('Donor processing failed: ${error.message}');
+      }
+      throw error;
+    }
+  },
+  
+  async createStripeCustomer(donorId: string, email: string, name?: string): Promise<string> {
+    const customerData = { 
+      metadata: { donorId },
+      email,
+      name: name || undefined
+    };
+    
+    const newCustomer = await stripe.customers.create(customerData);
+    if (!newCustomer) throw new Error('Stripe customer creation failed.');
+    return newCustomer.id;
+  },
+  
+  async updateStripeCustomerId(donorId: string, stripeCustomerId: string): Promise<void> {
+    await safeDbOperation(
+      () => supabaseAdmin.from('donors')
+        .update({ stripe_customer_id: stripeCustomerId })
+        .eq('id', donorId),
+      'Failed to update Stripe customer ID for donor ${donorId}'
     );
+  }
 };
 
-export {
-  upsertProductRecord,
-  upsertPriceRecord,
-  deleteProductRecord,
-  deletePriceRecord,
-  createOrRetrieveCustomer,
-  manageSubscriptionStatusChange
+/**
+ * Donation Operations
+ */
+const donationService = {
+  async recordOneTimeDonation({
+    projectId,
+    donorId,
+    amount,
+    paymentIntentId,
+    currency = DEFAULT_CURRENCY,
+    message = null,
+    isAnonymous = false
+  }: {
+    projectId: string;
+    donorId: string;
+    amount: number;
+    paymentIntentId: string;
+    currency?: string;
+    message?: string | null;
+    isAnonymous?: boolean;
+  }): Promise<string> {
+    // Create donation record
+    const donation: Donation = {
+      id: crypto.randomUUID(),
+      project_id: projectId,
+      donor_id: donorId,
+      amount,
+      currency,
+      payment_intent_id: paymentIntentId,
+      message,
+      is_anonymous: isAnonymous,
+      created_at: new Date().toISOString()
+    };
+    
+    await safeDbOperation(
+      () => supabaseAdmin.from('donations').insert([donation]),
+      'Failed to record donation for project ${projectId}'
+    );
+    
+    // Update project funding total
+    await projectService.updateFundingAmount(projectId, amount);
+    
+    return donation.id;
+  },
+  
+  async createOneTimePaymentIntent({
+    projectId,
+    stripeCustomerId,
+    amount,
+    currency = DEFAULT_CURRENCY,
+    paymentMethods = DEFAULT_PAYMENT_METHODS
+  }: {
+    projectId: string;
+    stripeCustomerId: string;
+    amount: number;
+    currency?: string;
+    paymentMethods?: string[];
+  }): Promise<Stripe.PaymentIntent> {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency,
+      customer: stripeCustomerId,
+      payment_method_types: paymentMethods,
+      metadata: { projectId },
+      confirm: false
+    });
+    
+    return paymentIntent;
+  }
+};
+
+/**
+ * Recurring Donation Operations
+ */
+const recurringDonationService = {
+  async createRecurringDonation({
+    projectId,
+    donorId,
+    amount,
+    subscriptionId,
+    currency = DEFAULT_CURRENCY,
+    message = null,
+    isAnonymous = false,
+    frequency = 'month'
+  }: {
+    projectId: string;
+    donorId: string;
+    amount: number;
+    subscriptionId: string;
+    currency?: string;
+    message?: string | null;
+    isAnonymous?: boolean;
+    frequency?: 'week' | 'month' | 'year';
+  }): Promise<string> {
+    // Create recurring donation record
+    const recurringDonation: RecurringDonation = {
+      id: crypto.randomUUID(),
+      project_id: projectId,
+      donor_id: donorId,
+      amount,
+      currency,
+      subscription_id: subscriptionId,
+      message,
+      is_anonymous: isAnonymous,
+      frequency,
+      status: 'active',
+      created_at: new Date().toISOString()
+    };
+    
+    await safeDbOperation(
+      () => supabaseAdmin.from('recurring_donations').insert([recurringDonation]),
+      'Failed to create recurring donation for project ${projectId}'
+    );
+    
+    // Record first payment as a one-time donation
+    await donationService.recordOneTimeDonation({
+      projectId,
+      donorId,
+      amount,
+      paymentIntentId: 'sub_first_payment_${subscriptionId}',
+      currency,
+      message,
+      isAnonymous
+    });
+    
+    return recurringDonation.id;
+  },
+  
+  async createSubscription({
+    projectId,
+    stripeCustomerId,
+    amount,
+    currency = DEFAULT_CURRENCY,
+    interval = 'month',
+    paymentMethodId
+  }: {
+    projectId: string;
+    stripeCustomerId: string;
+    amount: number;
+    currency?: string;
+    interval?: 'week' | 'month' | 'year';
+    paymentMethodId: string;
+  }): Promise<Stripe.Subscription> {
+    // Create a subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: stripeCustomerId,
+      items: [
+        {
+          price_data: {
+            currency,
+            product_data: {
+              name: '${interval}ly donation to project ${projectId}',
+              metadata: { projectId }
+            },
+            unit_amount: amount,
+            recurring: {
+              interval
+            }
+          }
+        }
+      ],
+      default_payment_method: paymentMethodId,
+      metadata: { projectId },
+      expand: ['latest_invoice.payment_intent']
+    });
+    
+    return subscription;
+  },
+  
+  async updateRecurringDonationStatus(
+    subscriptionId: string,
+    status: 'active' | 'paused' | 'canceled'
+  ): Promise<void> {
+    await safeDbOperation(
+      () => supabaseAdmin.from('recurring_donations')
+        .update({ status })
+        .eq('subscription_id', subscriptionId),
+      'Failed to update recurring donation status for subscription ${subscriptionId}'
+    );
+    
+    console.log('Updated recurring donation status to ${status} for subscription ${subscriptionId}');
+  },
+  
+  async handleSubscriptionUpdated(
+    subscription: Stripe.Subscription
+  ): Promise<void> {
+    const status = subscription.status === 'active' ? 'active' : 
+                  subscription.status === 'canceled' ? 'canceled' : 'paused';
+    
+    await this.updateRecurringDonationStatus(subscription.id, status);
+  },
+  
+  async processRecurringPayment(
+    subscriptionId: string,
+    invoiceId: string,
+    paymentIntentId: string,
+    amount: number
+  ): Promise<void> {
+    // Find the recurring donation
+    const { data: recurringDonation } = await supabaseAdmin
+      .from('recurring_donations')
+      .select('*')
+      .eq('subscription_id', subscriptionId)
+      .single();
+    
+    if (!recurringDonation) {
+      throw new Error('Recurring donation not found for subscription ${subscriptionId}');
+    }
+    
+    // Record the payment
+    await donationService.recordOneTimeDonation({
+      projectId: recurringDonation.project_id,
+      donorId: recurringDonation.donor_id,
+      amount,
+      paymentIntentId,
+      currency: recurringDonation.currency,
+      message: recurringDonation.message,
+      isAnonymous: recurringDonation.is_anonymous
+    });
+    
+    // Update the last payment date
+    await safeDbOperation(
+      () => supabaseAdmin.from('recurring_donations')
+        .update({ last_payment_at: new Date().toISOString() })
+        .eq('id', recurringDonation.id),
+      'Failed to update last payment date for recurring donation ${recurringDonation.id}'
+    );
+  }
+};
+
+/**
+ * Webhook Handler Functions
+ */
+const webhookHandlers = {
+  async handlePaymentIntentSucceeded(
+    paymentIntent: Stripe.PaymentIntent
+  ): Promise<void> {
+    const projectId = paymentIntent.metadata.projectId;
+    
+    // Check if this is a one-time donation (not associated with a subscription)
+    if (!paymentIntent.invoice) {
+      // For one-time payments, we need to find the donor from the customer
+      const { data: donor } = await supabaseAdmin
+        .from('donors')
+        .select('*')
+        .eq('stripe_customer_id', paymentIntent.customer)
+        .single();
+      
+      if (!donor) {
+        throw new Error('Donor not found for customer ${paymentIntent.customer}');
+      }
+      
+      // Record the donation
+      await donationService.recordOneTimeDonation({
+        projectId,
+        donorId: donor.id,
+        amount: paymentIntent.amount,
+        paymentIntentId: paymentIntent.id,
+        currency: paymentIntent.currency
+      });
+    }
+    // If it has an invoice, it's part of a subscription and handled by the invoice.paid event
+  },
+  
+  async handleInvoicePaid(
+    invoice: Stripe.Invoice
+  ): Promise<void> {
+    if (!invoice.subscription || !invoice.payment_intent) return;
+    
+    await recurringDonationService.processRecurringPayment(
+      invoice.subscription as string,
+      invoice.id,
+      invoice.payment_intent as string,
+      invoice.amount_paid
+    );
+  },
+  
+  async handleSubscriptionUpdated(
+    subscription: Stripe.Subscription
+  ): Promise<void> {
+    await recurringDonationService.handleSubscriptionUpdated(subscription);
+  }
+};
+
+
+/** 
+ * Main API Functions 
+ */
+const processDonation = async ({ 
+  projectId, 
+  email, 
+  amount, 
+  currency = DEFAULT_CURRENCY, 
+  isRecurring = false, 
+  userId = undefined, 
+  name = undefined, 
+  message = null, 
+  isAnonymous = false, 
+  paymentMethodId, 
+  frequency = 'month' 
+}: { 
+  projectId: string; 
+  email: string; 
+  amount: number; 
+  currency?: string; 
+  isRecurring?: boolean; 
+  userId?: string; 
+  name?: string; 
+  message?: string | null; 
+  isAnonymous?: boolean; 
+  paymentMethodId: string; 
+  frequency?: 'week' | 'month' | 'year'; 
+}): Promise<{ 
+  donationId: string; 
+  clientSecret?: string; 
+}> => {
+  try {
+    // Ensure project exists
+    await projectService.getById(projectId);
+
+    // Create or retrieve donor
+    const { donorId, stripeCustomerId } = await donorService.createOrRetrieveDonor({ 
+      email, 
+      userId, 
+      name 
+    });
+
+    // Attach payment method to customer if provided
+    await stripe.paymentMethods.attach(paymentMethodId, { 
+      customer: stripeCustomerId 
+    });
+
+    // Set payment method as default for the customer
+    await stripe.customers.update(stripeCustomerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId
+      }
+    });
+
+    let paymentIntentId: string | null = null;
+    let subscriptionId: string | null = null;
+
+    // Handle one-time vs recurring donation
+    if (isRecurring) {
+      // Create a subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{
+          price_data: {
+            currency,
+            product_data: {
+              name: 'Donation to Project ${projectId}',
+            },
+            unit_amount: amount * 100, // Convert to cents
+            recurring: {
+              interval: frequency,
+            },
+          },
+        }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: {
+          payment_method_types: ['card'],
+          save_default_payment_method: 'on_subscription',
+        },
+        expand: ['latest_invoice.payment_intent'],
+      });
+
+      subscriptionId = subscription.id;
+      paymentIntentId = subscription.latest_invoice?.payment_intent?.id || null;
+    } else {
+      // Create a payment intent for one-time donation
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount * 100, // Convert to cents
+        currency,
+        customer: stripeCustomerId,
+        payment_method: paymentMethodId,
+        off_session: true,
+        confirm: true,
+        description: 'Donation to Project ${projectId}',
+      });
+
+      paymentIntentId = paymentIntent.id;
+    }
+
+    // Create donation record in database
+    const donationData = {
+      projectId,
+      donorId,
+      amount,
+      currency,
+      isRecurring,
+      message,
+      isAnonymous,
+      paymentIntentId: paymentIntentId!,
+      stripeSubscriptionId: subscriptionId,
+      frequency: isRecurring ? frequency : null,
+      status: 'pending',
+    };
+
+    const donation = await donationService.recordOneTimeDonation(donationData);
+
+    // Return donation ID and client secret if applicable
+    let clientSecret = null;
+    if (isRecurring) {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId as string, {
+        expand: ['latest_invoice.payment_intent'],
+      });
+      clientSecret = subscription.latest_invoice?.payment_intent?.client_secret || null;
+    } else {
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId as string);
+      clientSecret = paymentIntent.client_secret;
+    }
+
+    return {
+      donationId: donation,
+      clientSecret: clientSecret || undefined,
+    };
+  } catch (error) {
+    console.error('Error processing donation:', error);
+    throw new Error('Failed to process donation');
+  }
 };
