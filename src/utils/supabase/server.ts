@@ -2,7 +2,7 @@ import { type CookieOptions, createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 import { Env } from '@/libs/Env';
-import type { Database } from '@/types_db';
+import type { Database } from '@/types/db';
 
 // Define a function to create a Supabase client for server-side operations
 // The function takes a cookie store created with next/headers cookies as an argument
