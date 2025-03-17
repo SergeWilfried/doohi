@@ -22,6 +22,9 @@
     "storybook:build": "storybook build",
     "storybook:serve": "http-server storybook-static --port 6006 --silent",
     "serve-storybook": "run-s storybook:*",
+    "stripe:login": "stripe login",
+    "stripe:listen": "stripe listen --forward-to=localhost:3000/api/webhooks",
+    "stripe:fixtures": "stripe fixtures fixtures/stripe-fixtures.json",
     "test-storybook:ci": "start-server-and-test serve-storybook http://127.0.0.1:6006 test-storybook",
     "prepare": "husky"
   },
