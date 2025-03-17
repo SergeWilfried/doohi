@@ -14,7 +14,6 @@ import {
   Palette,
   Users,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { EditProjectOverlay } from '@/components/edit-project-overlay';
@@ -96,7 +95,6 @@ export default function DashboardPage({ sessionId, userId }: { sessionId: string
   console.warn(sessionId);
   console.warn(userId);
 
-  const router = useRouter();
   const [projects, setProjects] = useState(mockProjects);
   const [donations] = useState(mockDonations);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -123,17 +121,6 @@ export default function DashboardPage({ sessionId, userId }: { sessionId: string
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Button
-          onClick={() => {
-            router.push('/');
-          }}
-        >
-          Logout
-        </Button>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>My Projects</CardTitle>
