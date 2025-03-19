@@ -1,6 +1,6 @@
 import { Env } from '@/libs/Env';
 import { PawaPay } from '@/services/pawapay/pawapay';
-import type { SignatureOptions } from '@/types/payments/pawapay';
+import type { SignatureOptions } from '@/types/payments/Pawapay';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Load config from environment variables

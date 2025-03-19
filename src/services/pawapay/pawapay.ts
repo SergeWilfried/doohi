@@ -1,14 +1,6 @@
+import type { SignatureOptions, CountryAvailability, PredictCorrespondentResponse, TransactionLimits, DepositRequest, TransactionResponse, PaymentPageSessionRequest, PaymentPageSessionResponse } from '@/types/payments/Pawapay';
 import crypto from 'crypto';
-import type { 
-  CountryAvailability, 
-  DepositRequest, 
-  PaymentPageSessionRequest, 
-  PaymentPageSessionResponse, 
-  PredictCorrespondentResponse, 
-  SignatureOptions, 
-  TransactionLimits, 
-  TransactionResponse 
-} from '@/types/payments/pawapay';
+
 
 const DEFAULT_FETCH_TIMEOUT = 10000; // 10 seconds
 
