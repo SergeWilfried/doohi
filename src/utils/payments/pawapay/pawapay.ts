@@ -1,36 +1,5 @@
 import crypto from 'crypto';
 
-// Types for pawaPay API
-type MMOAvailability = {
-  mmoId: string;
-  country: string;
-  name: string;
-  available: boolean;
-  status: 'OPERATIONAL' | 'DEGRADED' | 'OUTAGE';
-};
-
-type TransactionLimits = {
-  mmoId: string;
-  country: string;
-  currency: string;
-  minAmount: number;
-  maxAmount: number;
-};
-
-type TransactionStatus = 'PENDING' | 'ACCEPTED' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-
-type TransactionResponse = {
-  id: string;
-  status: TransactionStatus;
-  message?: string;
-  created?: string;
-};
-
-type SignatureOptions = {
-  algorithm: 'rsa-pss-sha512' | 'rsa-v1_5-sha256' | 'ecdsa-p256-sha256' | 'ecdsa-p384-sha384';
-  privateKey: string;
-  keyId: string;
-};
 
 // PawaPay API client with proper URL and signature support
 class PawaPay {
@@ -438,4 +407,67 @@ class PawaPay {
       return false;
     }
   }
+
+  // Create a Payment Page session
+async createPaymentPageSession(payload: {
+  depositId: string;
+  returnUrl: string;
+  statementDescription?: string;
+  amount?: string;
+  msisdn?: string;
+  language?: 'EN' | 'FR';
+  country?: string;
+  reason?: string;
+  metadata?: Array<{
+    fieldName: string;
+    fieldValue: string;
+    isPII?: boolean;
+  }>;
+}): Promise<{ redirectUrl: string }> {
+  try {
+    const path = '/v1/widget/sessions';
+    const headers = this.getHeaders();
+
+    // Add signature headers if signature options are configured
+    if (this.signatureOptions) {
+      const signatureHeaders = await this.signRequest('POST', path, payload);
+      Object.assign(headers, signatureHeaders);
+    }
+
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Idempotency-Key': payload.depositId
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create payment page session: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error creating payment page session:', error);
+    throw error;
+  }
+}
+  // Check deposit status
+async checkDepositStatus(depositId: string): Promise<any> {
+  try {
+    const response = await fetch(`${this.baseUrl}/deposits/${depositId}`, {
+      headers: this.getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to check deposit status: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error checking deposit status:', error);
+    throw error;
+  }
+}
 }
