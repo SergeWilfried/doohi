@@ -168,7 +168,7 @@ class PawaPay {
       if (!result.correspondent) {
         throw new PawaPayError('Correspondent not returned in response');
       }
-      return result.correspondent;
+      return result;
     } catch (error) {
       console.error('Error predicting correspondent:', error);
       throw error;
