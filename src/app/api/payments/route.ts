@@ -1,5 +1,4 @@
 import arcjet, {
-  type ArcjetRuleResult,
   detectBot,
   shield,
   slidingWindow,
