@@ -40,6 +40,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { email, amount } = body;
+    console.warn(amount);
 
     const decision = await aj.protect(request, { email });
 
