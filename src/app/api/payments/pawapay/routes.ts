@@ -238,42 +238,22 @@ export async function POST(request: NextRequest) {
 }
 
 // This is a webhook handler for callbacks from PawaPay
-export async function handleCallback(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const headers = Object.fromEntries(request.headers.entries());
-    
-    // Get public key from environment or config
-    const publicKey = Env.PAWAPAY_PUBLIC_KEY;
-    
-    // Validate signature if public key is available
-    if (publicKey && !pawaPay.validateCallbackSignature(headers, body, publicKey)) {
-      console.error('Invalid callback signature');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-    
-    // Process the callback based on its type
-    const isDeposit = 'depositId' in body;
-    const isPayout = 'payoutId' in body;
-    
-    if (isDeposit) {
-      // Process deposit callback
-      console.log(`Received deposit callback for ${body.depositId}, status: ${body.status}`);
-      // Here you would update your database or trigger other business logic
-    } else if (isPayout) {
-      // Process payout callback
-      console.log(`Received payout callback for ${body.payoutId}, status: ${body.status}`);
-      // Here you would update your database or trigger other business logic
-    } else {
-      console.warn('Unknown callback type', body);
-    }
-    
-    // Always respond with 200 OK to acknowledge receipt
-    return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error('Error processing callback:', error);
-    // Still return 200 to prevent PawaPay from retrying unnecessarily
-    // You might want to log this error to your monitoring system
-    return NextResponse.json({ received: true, error: 'Error processing callback' });
-  }
+// In src/libs/Env.ts
+
+export const serverEnv = {
+  PAWAPAY_PRIVATE_KEY: z.string().min(1),
+  PAWAPAY_API_KEY: z.string().min(1),
+  PAWAPAY_KEY_ID: z.string().min(1),
+  PAWAPAY_SIGNATURE_ALGORITHM: z.string().min(1),
+  PAWAPAY_ENVIRONMENT: z.string().min(1),
+  PAWAPAY_PUBLIC_KEY: z.string().optional(),
+}
+
+export const runtimeEnv = {
+  PAWAPAY_PRIVATE_KEY: process.env.PAWAPAY_PRIVATE_KEY,
+  PAWAPAY_API_KEY: process.env.PAWAPAY_API_KEY,
+  PAWAPAY_KEY_ID: process.env.PAWAPAY_KEY_ID,
+  PAWAPAY_SIGNATURE_ALGORITHM: process.env.PAWAPAY_SIGNATURE_ALGORITHM,
+  PAWAPAY_ENVIRONMENT: process.env.PAWAPAY_ENVIRONMENT,
+  PAWAPAY_PUBLIC_KEY: process.env.PAWAPAY_PUBLIC_KEY,
 }
