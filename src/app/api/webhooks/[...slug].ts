@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   
   // Extract provider from URL path
-  const { slug } = req.query as { slug: String[]} ;
+  const { slug } = req.query;
   if (!slug || !Array.isArray(slug) || slug.length === 0) {
     console.error('❌ No provider specified in URL');
     return res.status(400).json({ error: 'No provider specified' });
