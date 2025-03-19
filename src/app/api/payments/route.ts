@@ -5,7 +5,6 @@ import arcjet, {
   slidingWindow,
   validateEmail,
 } from "@arcjet/next";
-import { isSpoofedBot } from "@arcjet/inspect";
 import { NextResponse } from "next/server";
 import { Env } from "@/libs/Env";
 
@@ -78,9 +77,11 @@ export async function POST(request: Request) {
     // Verification isn't always possible, so we recommend checking the decision
     // separately.
     // https://docs.arcjet.com/bot-protection/reference#bot-verification
-    if (decision.results.some(isSpoofedBot)) {
-      console.error("Spoofed bot detected", decision);
-      return NextResponse.json(
+
+    if (decision.reason.isBot() && decision.reason.isSpoofed()) {
+      console.log("Detected spoofed bot", decision.reason.spoofed);
+      // Return a 403 or similar response
+       return NextResponse.json(
         { success: false, message: "Forbidden" },
         { status: 403 },
       );
