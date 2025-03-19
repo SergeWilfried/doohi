@@ -66,4 +66,17 @@ export type TransactionLimits = {
 
 export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 
+export interface OperationStatus {
+  operationType: 'DEPOSIT' | 'PAYOUT';
+  status: 'OPERATIONAL' | 'DELAYED' | 'CLOSED';
+}
 
+export interface Correspondent {
+  correspondent: string;
+  operationTypes: OperationStatus[];
+}
+
+export interface CountryAvailability {
+  country: string;
+  correspondents: Correspondent[];
+}

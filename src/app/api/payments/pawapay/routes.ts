@@ -1,22 +1,23 @@
+import { Env } from '@/libs/Env';
 import { PawaPay } from '@/services/pawapay/pawapay';
 import type { SignatureOptions } from '@/types/payments/pawapay';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Load config from environment variables
 const getConfig = () => {
-  const apiKey = process.env.PAWAPAY_API_KEY;
+  const apiKey = Env.PAWAPAY_API_KEY;
   if (!apiKey) {
     throw new Error('PAWAPAY_API_KEY environment variable is not set');
   }
   
-  const env = (process.env.PAWAPAY_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production';
+  const env = (Env.PAWAPAY_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production';
   
   // Optional signature configuration
   let signatureOptions: SignatureOptions | undefined;
   
-  const privateKey = process.env.PAWAPAY_PRIVATE_KEY;
-  const keyId = process.env.PAWAPAY_KEY_ID;
-  const algorithm = process.env.PAWAPAY_SIGNATURE_ALGORITHM as SignatureOptions['algorithm'] || 'ecdsa-p256-sha256';
+  const privateKey = Env.PAWAPAY_PRIVATE_KEY;
+  const keyId = Env.PAWAPAY_KEY_ID;
+  const algorithm = Env.PAWAPAY_SIGNATURE_ALGORITHM as SignatureOptions['algorithm'] || 'ecdsa-p256-sha256';
   
   if (privateKey && keyId) {
     signatureOptions = {
@@ -36,11 +37,10 @@ try {
   pawaPay = new PawaPay(config.apiKey, config.env, config.signatureOptions);
 } catch (error) {
   console.error('Failed to initialize PawaPay client:', error);
-  // In a production application, you might want to handle this more gracefully
+  // In a production application, we might want to handle this more gracefully
   pawaPay = new PawaPay('invalid-api-key', 'sandbox');
 }
 
-// Next.js API routes
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const country = searchParams.get('country');
@@ -244,7 +244,7 @@ export async function handleCallback(request: NextRequest) {
     const headers = Object.fromEntries(request.headers.entries());
     
     // Get public key from environment or config
-    const publicKey = process.env.PAWAPAY_PUBLIC_KEY;
+    const publicKey = Env.PAWAPAY_PUBLIC_KEY;
     
     // Validate signature if public key is available
     if (publicKey && !pawaPay.validateCallbackSignature(headers, body, publicKey)) {

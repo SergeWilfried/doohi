@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { DepositRequest, MMOAvailability, PaymentPageSessionRequest, PaymentPageSessionResponse, SignatureOptions, TransactionLimits, TransactionResponse } from '@/types/payments/pawapay';
+import type { CountryAvailability, DepositRequest, PaymentPageSessionRequest, PaymentPageSessionResponse, SignatureOptions, TransactionLimits, TransactionResponse } from '@/types/payments/pawapay';
 
 
 // PawaPay API client with proper URL and signature support
@@ -108,22 +108,23 @@ class PawaPay {
   }
 
   // Check MMO availability before initiating payments
-  async checkAvailability(country: string): Promise<MMOAvailability[]> {
-    try {
-      const response = await fetch(`${this.baseUrl}/availability?country=${country}`, {
-        headers: this.getHeaders()
-      });
+// Update the checkAvailability method to use the correct return type
+async checkAvailability(country: string): Promise<CountryAvailability[]> {
+  try {
+    const response = await fetch(`${this.baseUrl}/availability?country=${country}`, {
+      headers: this.getHeaders()
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to check availability: ${response.statusText}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Error checking MMO availability:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`Failed to check availability: ${response.statusText}`);
     }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error checking MMO availability:', error);
+    throw error;
   }
+}
 
   // Predict the correspondent (MMO) for a specific phone number
   async predictCorrespondent(msisdn: string, country: string): Promise<string> {
