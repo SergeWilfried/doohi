@@ -135,11 +135,11 @@ export async function POST(request: Request) {
     // Only allow users from the US and UK
     if (
       decision.ip.hasCountry() &&
-      !["US", "UK"].includes(decision.ip.country)
+      !["US", "GB"].includes(decision.ip.country)
     ) {
       console.error("Country not allowed", decision);
       return NextResponse.json(
-        { success: false, message: "Forbidden" },
+        { success: false, message: "This service is only available in the US and UK" },
         { status: 403 },
       );
     }
