@@ -9,6 +9,11 @@ export const Env = createEnv({
     ARCJET_KEY: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    PAWAPAY_PRIVATE_KEY: z.string().min(1),
+    PAWAPAY_API_KEY: z.string().min(1),
+    PAWAPAY_KEY_ID: z.string().min(1),
+    PAWAPAY_SIGNATURE_ALGORITHM: z.string().min(1),
+    PAWAPAY_ENVIRONMENT: z.string().min(1),
     BILLING_PLAN_ENV: z.enum(['dev', 'test', 'prod']),
   },
   client: {

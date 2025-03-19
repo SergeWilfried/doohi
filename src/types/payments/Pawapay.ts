@@ -1,5 +1,5 @@
 // Define interfaces for request and response types
-interface PaymentPageSessionRequest {
+export interface PaymentPageSessionRequest {
   depositId: string;
   returnUrl: string;
   statementDescription?: string;
@@ -15,11 +15,11 @@ interface PaymentPageSessionRequest {
   }>;
 }
 
-interface PaymentPageSessionResponse {
+export interface PaymentPageSessionResponse {
   redirectUrl: string;
 }
 
-interface DepositRequest {
+export interface DepositRequest {
   amount: string;
   currency: string;
   country: string;
@@ -34,7 +34,7 @@ interface DepositRequest {
   correspondent?: string;
 }
 
-interface TransactionResponse {
+export interface TransactionResponse {
   transactionId: string;
   status: string;
   statusReason?: string;
@@ -42,14 +42,14 @@ interface TransactionResponse {
   // Add other fields as per the API response
 }
 
-interface MMOAvailability {
+export interface MMOAvailability {
   mmoId: string;
   name: string;
   status: 'AVAILABLE' | 'DEGRADED' | 'UNAVAILABLE';
   statusReason?: string;
 }
 
-interface SignatureOptions {
+export interface SignatureOptions {
   keyId: string;
   privateKey: string;
   algorithm: 'rsa-v1_5-sha256' | 'rsa-pss-sha512' | 'ecdsa-p256-sha256' | 'ecdsa-p384-sha384';
