@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { CountryAvailability, DepositRequest, PaymentPageSessionRequest, PaymentPageSessionResponse, SignatureOptions, TransactionLimits, TransactionResponse } from '@/types/payments/pawapay';
+import type { CountryAvailability, DepositRequest, PaymentPageSessionRequest, PaymentPageSessionResponse, PredictCorrespondentResponse, SignatureOptions, TransactionLimits, TransactionResponse } from '@/types/payments/pawapay';
 
 
 // PawaPay API client with proper URL and signature support
@@ -127,7 +127,7 @@ async checkAvailability(country: string): Promise<CountryAvailability[]> {
 }
 
   // Predict the correspondent (MMO) for a specific phone number
-  async predictCorrespondent(msisdn: string, country: string): Promise<string> {
+  async predictCorrespondent(msisdn: string, country: string): Promise<PredictCorrespondentResponse> {
     try {
       const response = await fetch(
         `${this.baseUrl}/predict-correspondent?msisdn=${msisdn}&country=${country}`, 
