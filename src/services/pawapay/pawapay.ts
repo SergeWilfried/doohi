@@ -413,6 +413,22 @@ async checkAvailability(country: string): Promise<CountryAvailability[]> {
     }
   }
 
+    // Helper method to check if a specific operation is available for a correspondent
+  isOperationAvailable(
+    availabilityData: CountryAvailability[], 
+    country: string, 
+    correspondent: string, 
+    operationType: 'DEPOSIT' | 'PAYOUT'
+  ): boolean {
+    const countryData = availabilityData.find(c => c.country === country);
+    if (!countryData) return false;
+    
+    const correspondentData = countryData.correspondents.find(c => c.correspondent === correspondent);
+    if (!correspondentData) return false;
+    
+    const operation = correspondentData.operationTypes.find(op => op.operationType === operationType);
+    return operation?.status === 'OPERATIONAL';
+  }
   // Create a Payment Page session
   async createPaymentPageSession(payload: PaymentPageSessionRequest): Promise<PaymentPageSessionResponse> {
     try {
