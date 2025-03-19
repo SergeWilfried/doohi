@@ -9,6 +9,11 @@ export const Env = createEnv({
     ARCJET_KEY: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    PAWAPAY_PRIVATE_KEY: z.string().min(1),
+    PAWAPAY_API_KEY: z.string().min(1),
+    PAWAPAY_KEY_ID: z.string().min(1),
+    PAWAPAY_SIGNATURE_ALGORITHM: z.string().min(1),
+    PAWAPAY_ENVIRONMENT: z.string().min(1),
     BILLING_PLAN_ENV: z.enum(['dev', 'test', 'prod']),
   },
   client: {
@@ -36,5 +41,10 @@ export const Env = createEnv({
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     NODE_ENV: process.env.NODE_ENV,
+    PAWAPAY_PRIVATE_KEY: process.env.PAWAPAY_PRIVATE_KEY,
+    PAWAPAY_API_KEY:  process.env.PAWAPAY_API_KEY,
+    PAWAPAY_KEY_ID:  process.env.PAWAPAY_KEY_ID,
+    PAWAPAY_SIGNATURE_ALGORITHM:  process.env.PAWAPAY_SIGNATURE_ALGORITHM,
+    PAWAPAY_ENVIRONMENT:  process.env.PAWAPAY_ENVIRONMENT,
   },
 });

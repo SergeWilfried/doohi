@@ -3,7 +3,7 @@
 import { headers } from 'next/headers';
 import type { Stripe } from 'stripe';
 
-import { stripe } from '@/libs/stripe';
+import { stripe } from '@/libs/payments/stripe';
 import { formatAmountForStripe } from '@/utils/stripe-helpers';
 import { CURRENCY } from '@/utils/StripeConfig';
 
