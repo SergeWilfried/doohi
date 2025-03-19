@@ -1,6 +1,5 @@
-// pages/api/webhooks/[...slug].ts
-import { handlePawapayWebhook } from '@/libs/PawapayWebhookHandler';
-import { handleStripeWebhook } from '@/libs/stripeWebhookHandler';
+import { handlePawapayWebhook } from '@/libs/payments/PawapayWebhookHandler';
+import { handleStripeWebhook } from '@/libs/payments/StripeWebhookHandler';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export const config = {

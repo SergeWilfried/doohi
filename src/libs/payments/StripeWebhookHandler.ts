@@ -1,6 +1,6 @@
 // libs/stripeWebhookHandler.ts
 import type { Stripe } from 'stripe';
-import { stripe } from '@/libs/stripe';
+import { stripe } from '@/libs/payments/stripe';
 import { Env } from '@/libs/Env';
 import { NextResponse } from 'next/server';
 

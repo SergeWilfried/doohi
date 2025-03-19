@@ -1,6 +1,6 @@
 // libs/pawapayWebhookHandler.ts
 import type { NextApiRequest } from 'next';
-import { Env } from './Env';
+import { Env } from '../Env';
 import { PawaPay } from '@/services/pawapay/pawapay';
 import { NextResponse } from 'next/server';
 
