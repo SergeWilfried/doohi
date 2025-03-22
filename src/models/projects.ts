@@ -7,6 +7,14 @@ import type { Project } from '@/types/types';
 
 import { projectMediaSchema, projectsSchema, projectTagsSchema, tagsSchema } from './Schema';
 
+type ProjectFilters = {
+  categoryId: string;
+  publisherId: string;
+  featured: boolean;
+  search: string;
+  status: string;
+  sort: string;
+};
 export const projectOperations = {
   // Create project
   create: async (projectData: Project) => {
@@ -72,7 +80,14 @@ export const projectOperations = {
   },
 
   // List projects with pagination and filters
-  list: async (page = 1, limit = 10, filters = {}) => {
+  list: async (page = 1, limit = 10, filters: ProjectFilters = {
+    categoryId: '',
+    publisherId: '',
+    featured: false,
+    search: '',
+    status: '',
+    sort: '',
+  }) => {
     const offset = (page - 1) * limit;
 
     let query = db.select().from(projectsSchema).where(isNull(projectsSchema.deletedAt));
