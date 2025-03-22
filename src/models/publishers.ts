@@ -92,7 +92,21 @@ export const publisherOperations = {
   },
 
   // Update publisher statistics
-  updateStats: async (id, { totalProjects, totalFundsRaised }) => {
+  updateStats: async (
+    id: string,
+    { totalProjects, totalFundsRaised }: { totalProjects: number; totalFundsRaised: number }
+  ) => {
+    // Check if publisher exists and is not deleted
+    const publisher = await db.query.publishersSchema.findFirst({
+      where: (publishers) => {
+        return eq(publishers.id, id) && isNull(publishers.deletedAt);
+      },
+    });
+    
+    if (!publisher) {
+      throw new Error(`Publisher with ID ${id} not found or has been deleted`);
+    }
+
     return db
       .update(publishersSchema)
       .set({
