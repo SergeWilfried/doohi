@@ -1,32 +1,32 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { cache } from 'react';
 
 // Type definitions
-interface QueryOptions {
+type QueryOptions = {
   page?: number;
   pageSize?: number;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
   fields?: string;
   filters?: Record<string, any>;
-}
+};
 
-interface User {
+type User = {
   id: string;
   email: string;
   name?: string;
   profile_image_url?: string;
   created_at: string;
-}
+};
 
-interface UserProfile extends User {
+type UserProfile = {
   bio?: string;
   website?: string;
   social_links?: Record<string, string>;
   backers?: Backer[];
-}
+} & User;
 
-interface Project {
+type Project = {
   id: string;
   title: string;
   description: string;
@@ -45,41 +45,41 @@ interface Project {
   project_media?: ProjectMedia[];
   rewards?: Reward[];
   updates?: ProjectUpdate[];
-}
+};
 
-interface Category {
+type Category = {
   id: string;
   name: string;
   description?: string;
   display_order: number;
-}
+};
 
-interface Publisher {
+type Publisher = {
   id: string;
   name: string;
   description?: string;
   logo_url?: string;
   website?: string;
   projects?: Project[];
-}
+};
 
-interface Backer {
+type Backer = {
   id: string;
   user_id: string;
   project_id: string;
   amount: number;
   created_at: string;
-}
+};
 
-interface ProjectMedia {
+type ProjectMedia = {
   id: string;
   project_id: string;
   url: string;
   type: 'image' | 'video';
   display_order: number;
-}
+};
 
-interface Reward {
+type Reward = {
   id: string;
   project_id: string;
   title: string;
@@ -88,17 +88,17 @@ interface Reward {
   estimated_delivery: string;
   limit?: number;
   claimed: number;
-}
+};
 
-interface ProjectUpdate {
+type ProjectUpdate = {
   id: string;
   project_id: string;
   title: string;
   content: string;
   created_at: string;
-}
+};
 
-interface Comment {
+type Comment = {
   id: string;
   project_id: string;
   user_id: string;
@@ -111,9 +111,9 @@ interface Comment {
     name: string;
     profile_image_url?: string;
   };
-}
+};
 
-interface Notification {
+type Notification = {
   id: string;
   user_id: string;
   type: string;
@@ -122,17 +122,17 @@ interface Notification {
   read: boolean;
   created_at: string;
   data?: Record<string, any>;
-}
+};
 
-interface QueryError extends Error {
+type QueryError = {
   code?: string;
   details?: string;
-}
+} & Error;
 
 // Error handling middleware
 const withErrorHandling = <T, Args extends any[]>(
   queryFn: (...args: Args) => Promise<T>,
-  errorMessage: string
+  errorMessage: string,
 ) => {
   return async (...args: Args): Promise<T> => {
     try {
@@ -151,7 +151,7 @@ const withErrorHandling = <T, Args extends any[]>(
 // Performance tracking middleware
 const withPerformanceTracking = <T, Args extends any[]>(
   queryFn: (...args: Args) => Promise<T>,
-  queryName: string
+  queryName: string,
 ) => {
   return async (...args: Args): Promise<T> => {
     const startTime = performance.now();
@@ -171,7 +171,7 @@ const withPerformanceTracking = <T, Args extends any[]>(
 // Input validation middleware
 const withValidation = <T, Args extends any[]>(
   queryFn: (...args: Args) => Promise<T>,
-  validator: (args: Args) => boolean | string
+  validator: (args: Args) => boolean | string,
 ) => {
   return async (...args: Args): Promise<T> => {
     const validationResult = validator(args);
@@ -202,11 +202,15 @@ const applySorting = (query: any, sortBy?: string, sortDirection: 'asc' | 'desc'
 
 // Helper for filtering
 const applyFilters = (query: any, filters?: Record<string, any>) => {
-  if (!filters) return query;
+  if (!filters) {
+    return query;
+  }
 
   Object.entries(filters).forEach(([key, value]) => {
-    if (value === undefined || value === null) return;
-    
+    if (value === undefined || value === null) {
+      return;
+    }
+
     if (typeof value === 'string' && value.includes('%')) {
       // Handle like queries
       query = query.ilike(key, value);
@@ -224,7 +228,9 @@ const applyFilters = (query: any, filters?: Record<string, any>) => {
 
 // Sanitize input to prevent SQL injection
 const sanitizeInput = (input: string): string => {
-  if (!input) return '';
+  if (!input) {
+    return '';
+  }
   // Escape special characters used in SQL LIKE patterns
   return input.replace(/[\\%_]/g, '\\$&');
 };
@@ -245,11 +251,13 @@ export const getUser = cache(
   withErrorHandling(
     async (supabase: SupabaseClient): Promise<User | null> => {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       return user;
     },
-    'Failed to get authenticated user'
-  )
+    'Failed to get authenticated user',
+  ),
 );
 
 /**
@@ -265,16 +273,18 @@ export const getUserProfile = cache(
             .select('id, name, email, profile_image_url, bio, website, social_links, created_at, backers(id, project_id, amount, created_at)')
             .eq('id', userId)
             .single();
-            
-          if (error) throw error;
+
+          if (error) {
+            throw error;
+          }
           return data;
         },
-        (args) => args[1] ? true : 'User ID is required'
+        args => args[1] ? true : 'User ID is required',
       ),
-      'Failed to get user profile'
+      'Failed to get user profile',
     ),
-    'getUserProfile'
-  )
+    'getUserProfile',
+  ),
 );
 
 /**
@@ -283,9 +293,9 @@ export const getUserProfile = cache(
 export const getUserNotifications = cache(
   withErrorHandling(
     async (
-      supabase: SupabaseClient, 
-      userId: string, 
-      options: { page?: number; pageSize?: number; unreadOnly?: boolean } = {}
+      supabase: SupabaseClient,
+      userId: string,
+      options: { page?: number; pageSize?: number; unreadOnly?: boolean } = {},
     ): Promise<Notification[]> => {
       let query = supabase
         .from('notifications')
@@ -295,25 +305,27 @@ export const getUserNotifications = cache(
       if (options.unreadOnly) {
         query = query.eq('read', false);
       }
-      
+
       query = applyPagination(query, options.page, options.pageSize || 20)
         .order('created_at', { ascending: false });
-        
+
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get user notifications'
-  )
+    'Failed to get user notifications',
+  ),
 );
 
 /**
  * Subscribe to user notifications
  */
 export const subscribeToUserNotifications = (
-  supabase: SupabaseClient, 
-  userId: string, 
-  callback: (payload: any) => void
+  supabase: SupabaseClient,
+  userId: string,
+  callback: (payload: any) => void,
 ) => {
   return supabase
     .channel(`user-notifications-${userId}`)
@@ -321,7 +333,7 @@ export const subscribeToUserNotifications = (
       event: 'INSERT',
       schema: 'public',
       table: 'notifications',
-      filter: `user_id=eq.${userId}`
+      filter: `user_id=eq.${userId}`,
     }, payload => callback(payload))
     .subscribe();
 };
@@ -332,9 +344,9 @@ export const subscribeToUserNotifications = (
 export const getUserBackings = cache(
   withErrorHandling(
     async (
-      supabase: SupabaseClient, 
+      supabase: SupabaseClient,
       userId: string,
-      options: QueryOptions = {}
+      options: QueryOptions = {},
     ): Promise<any[]> => {
       let query = supabase
         .from('contributions')
@@ -344,16 +356,18 @@ export const getUserBackings = cache(
           rewards(id, title, amount, estimated_delivery)
         `)
         .eq('backer_id', userId);
-        
+
       query = applyPagination(query, options.page, options.pageSize);
       query = applySorting(query, options.sortBy || 'created_at', options.sortDirection || 'desc');
-        
+
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get user backings'
-  )
+    'Failed to get user backings',
+  ),
 );
 
 // ==================== PROJECT QUERIES ====================
@@ -366,7 +380,7 @@ export const getFeaturedProjects = cache(
     withErrorHandling(
       async (
         supabase: SupabaseClient,
-        limit: number = 6
+        limit: number = 6,
       ): Promise<Project[]> => {
         const { data, error } = await supabase
           .from('projects')
@@ -380,14 +394,16 @@ export const getFeaturedProjects = cache(
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(limit);
-          
-        if (error) throw error;
+
+        if (error) {
+          throw error;
+        }
         return data || [];
       },
-      'Failed to get featured projects'
+      'Failed to get featured projects',
     ),
-    'getFeaturedProjects'
-  )
+    'getFeaturedProjects',
+  ),
 );
 
 /**
@@ -412,16 +428,18 @@ export const getProjectDetails = cache(
             `)
             .eq('id', projectId)
             .single();
-            
-          if (error) throw error;
+
+          if (error) {
+            throw error;
+          }
           return data;
         },
-        (args) => args[1] ? true : 'Project ID is required'
+        args => args[1] ? true : 'Project ID is required',
       ),
-      'Failed to get project details'
+      'Failed to get project details',
     ),
-    'getProjectDetails'
-  )
+    'getProjectDetails',
+  ),
 );
 
 /**
@@ -430,9 +448,9 @@ export const getProjectDetails = cache(
 export const getProjectsByCategory = cache(
   withErrorHandling(
     async (
-      supabase: SupabaseClient, 
+      supabase: SupabaseClient,
       categoryId: string,
-      options: QueryOptions = {}
+      options: QueryOptions = {},
     ): Promise<Project[]> => {
       let query = supabase
         .from('projects')
@@ -445,16 +463,18 @@ export const getProjectsByCategory = cache(
         `)
         .eq('category_id', categoryId)
         .eq('status', 'active');
-        
+
       query = applyPagination(query, options.page, options.pageSize);
       query = applySorting(query, options.sortBy || 'created_at', options.sortDirection || 'desc');
-        
+
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get projects by category'
-  )
+    'Failed to get projects by category',
+  ),
 );
 
 /**
@@ -468,12 +488,14 @@ export const getProjectStatistics = cache(
         .select('*')
         .eq('project_id', projectId)
         .single();
-        
-      if (error) throw error;
+
+      if (error) {
+        throw error;
+      }
       return data;
     },
-    'Failed to get project statistics'
-  )
+    'Failed to get project statistics',
+  ),
 );
 
 /**
@@ -487,21 +509,23 @@ export const getProjectFundingStatus = cache(
         .select('*')
         .eq('project_id', projectId)
         .single();
-        
-      if (error) throw error;
+
+      if (error) {
+        throw error;
+      }
       return data;
     },
-    'Failed to get project funding status'
-  )
+    'Failed to get project funding status',
+  ),
 );
 
 /**
  * Subscribe to project updates
  */
 export const subscribeToProjectUpdates = (
-  supabase: SupabaseClient, 
-  projectId: string, 
-  callback: (payload: any) => void
+  supabase: SupabaseClient,
+  projectId: string,
+  callback: (payload: any) => void,
 ) => {
   return supabase
     .channel(`project-${projectId}`)
@@ -509,7 +533,7 @@ export const subscribeToProjectUpdates = (
       event: '*',
       schema: 'public',
       table: 'projects',
-      filter: `id=eq.${projectId}`
+      filter: `id=eq.${projectId}`,
     }, payload => callback(payload))
     .subscribe();
 };
@@ -522,12 +546,12 @@ export const searchProjects = cache(
     withErrorHandling(
       withValidation(
         async (
-          supabase: SupabaseClient, 
+          supabase: SupabaseClient,
           query: string,
-          options: QueryOptions = {}
+          options: QueryOptions = {},
         ): Promise<Project[]> => {
           const sanitizedQuery = sanitizeInput(query);
-          
+
           let dbQuery = supabase
             .from('projects')
             .select(`
@@ -537,27 +561,35 @@ export const searchProjects = cache(
             `)
             .eq('status', 'active')
             .or(`title.ilike.%${sanitizedQuery}%,description.ilike.%${sanitizedQuery}%`);
-            
+
           dbQuery = applyPagination(dbQuery, options.page, options.pageSize);
           dbQuery = applySorting(dbQuery, options.sortBy || 'created_at', options.sortDirection || 'desc');
           dbQuery = applyFilters(dbQuery, options.filters);
-          
+
           const { data, error } = await dbQuery;
-          if (error) throw error;
+          if (error) {
+            throw error;
+          }
           return data || [];
         },
         (args) => {
           const query = args[1];
-          if (!query) return 'Search query is required';
-          if (typeof query !== 'string') return 'Search query must be a string';
-          if (query.trim().length < 2) return 'Search query must be at least 2 characters';
+          if (!query) {
+            return 'Search query is required';
+          }
+          if (typeof query !== 'string') {
+            return 'Search query must be a string';
+          }
+          if (query.trim().length < 2) {
+            return 'Search query must be at least 2 characters';
+          }
           return true;
-        }
+        },
       ),
-      'Failed to search projects'
+      'Failed to search projects',
     ),
-    'searchProjects'
-  )
+    'searchProjects',
+  ),
 );
 
 // ==================== CATEGORY QUERIES ====================
@@ -572,12 +604,14 @@ export const getCategories = cache(
         .from('categories')
         .select('id, name, description, display_order')
         .order('display_order');
-        
-      if (error) throw error;
+
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get categories'
-  )
+    'Failed to get categories',
+  ),
 );
 
 // ==================== PUBLISHER QUERIES ====================
@@ -599,12 +633,14 @@ export const getPublisherProfile = cache(
         `)
         .eq('id', publisherId)
         .single();
-        
-      if (error) throw error;
+
+      if (error) {
+        throw error;
+      }
       return data;
     },
-    'Failed to get publisher profile'
-  )
+    'Failed to get publisher profile',
+  ),
 );
 
 // ==================== COMMENT QUERIES ====================
@@ -615,9 +651,9 @@ export const getPublisherProfile = cache(
 export const getProjectComments = cache(
   withErrorHandling(
     async (
-      supabase: SupabaseClient, 
+      supabase: SupabaseClient,
       projectId: string,
-      options: QueryOptions = {}
+      options: QueryOptions = {},
     ): Promise<Comment[]> => {
       let query = supabase
         .from('comments')
@@ -628,16 +664,18 @@ export const getProjectComments = cache(
         .eq('project_id', projectId)
         .is('parent_comment_id', null)
         .eq('moderation_status', 'approved');
-        
+
       query = applyPagination(query, options.page, options.pageSize);
       query = applySorting(query, options.sortBy || 'created_at', options.sortDirection || 'desc');
-      
+
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get project comments'
-  )
+    'Failed to get project comments',
+  ),
 );
 
 /**
@@ -655,12 +693,14 @@ export const getCommentReplies = cache(
         .eq('parent_comment_id', commentId)
         .eq('moderation_status', 'approved')
         .order('created_at', { ascending: true });
-        
-      if (error) throw error;
+
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get comment replies'
-  )
+    'Failed to get comment replies',
+  ),
 );
 
 /**
@@ -672,20 +712,20 @@ export const createComment = async (
     projectId,
     userId,
     content,
-    parentCommentId = null
+    parentCommentId = null,
   }: {
     projectId: string;
     userId: string;
     content: string;
     parentCommentId?: string | null;
-  }
+  },
 ): Promise<Comment> => {
   try {
     // Validate input
     if (!content.trim()) {
       throw new Error('Comment content cannot be empty');
     }
-    
+
     const { data, error } = await supabase
       .from('comments')
       .insert({
@@ -693,12 +733,14 @@ export const createComment = async (
         user_id: userId,
         parent_comment_id: parentCommentId,
         content: content.trim(),
-        moderation_status: 'pending' // Assuming comments need approval
+        moderation_status: 'pending', // Assuming comments need approval
       })
       .select()
       .single();
-      
-    if (error) throw error;
+
+    if (error) {
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Failed to create comment:', error);
@@ -716,30 +758,32 @@ export const getTrendingProjects = cache(
     withErrorHandling(
       async (
         supabase: SupabaseClient,
-        options: { timeframe?: 'day' | 'week' | 'month'; limit?: number } = {}
+        options: { timeframe?: 'day' | 'week' | 'month'; limit?: number } = {},
       ): Promise<Project[]> => {
         const timeframe = options.timeframe || 'week';
         const limit = options.limit || 10;
-        
+
         const timeframeMap = {
           day: '1 day',
           week: '7 days',
-          month: '30 days'
+          month: '30 days',
         };
-        
+
         const { data, error } = await supabase
           .rpc('get_trending_projects', {
             time_frame: timeframeMap[timeframe],
-            result_limit: limit
+            result_limit: limit,
           });
-          
-        if (error) throw error;
+
+        if (error) {
+          throw error;
+        }
         return data || [];
       },
-      'Failed to get trending projects'
+      'Failed to get trending projects',
     ),
-    'getTrendingProjects'
-  )
+    'getTrendingProjects',
+  ),
 );
 
 /**
@@ -750,19 +794,21 @@ export const getRecommendedProjects = cache(
     async (
       supabase: SupabaseClient,
       userId: string,
-      limit: number = 5
+      limit: number = 5,
     ): Promise<Project[]> => {
       const { data, error } = await supabase
         .rpc('get_user_recommendations', {
           user_id: userId,
-          rec_limit: limit
+          rec_limit: limit,
         });
-        
-      if (error) throw error;
+
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get recommended projects'
-  )
+    'Failed to get recommended projects',
+  ),
 );
 
 /**
@@ -773,12 +819,12 @@ export const getEndingSoonProjects = cache(
     async (
       supabase: SupabaseClient,
       daysRemaining: number = 7,
-      limit: number = 10
+      limit: number = 10,
     ): Promise<Project[]> => {
       const today = new Date();
       const endDate = new Date(today);
       endDate.setDate(today.getDate() + daysRemaining);
-      
+
       const { data, error } = await supabase
         .from('projects')
         .select(`
@@ -792,36 +838,49 @@ export const getEndingSoonProjects = cache(
         .lte('end_date', endDate.toISOString())
         .order('end_date', { ascending: true })
         .limit(limit);
-        
-      if (error) throw error;
+
+      if (error) {
+        throw error;
+      }
       return data || [];
     },
-    'Failed to get ending soon projects'
-  )
+    'Failed to get ending soon projects',
+  ),
 );
 
 // Export a reusable queryBuilder for custom queries
 export const createQueryBuilder = (supabase: SupabaseClient, table: string) => {
   let query = supabase.from(table).select();
-    
+  /// FIXME
   const builder = {
-  }
+  };
   return {
     select: (fields: string) => {
       query = supabase.from(table).select(fields);
       return builder;
     },
     filter: (column: string, operator: string, value: any) => {
-      if (operator === 'eq') query = query.eq(column, value);
-      else if (operator === 'neq') query = query.neq(column, value);
-      else if (operator === 'gt') query = query.gt(column, value);
-      else if (operator === 'gte') query = query.gte(column, value);
-      else if (operator === 'lt') query = query.lt(column, value);
-      else if (operator === 'lte') query = query.lte(column, value);
-      else if (operator === 'like') query = query.like(column, value);
-      else if (operator === 'ilike') query = query.ilike(column, value);
-      else if (operator === 'in') query = query.in(column, value);
-      else if (operator === 'is') query = query.is(column, value);
+      if (operator === 'eq') {
+        query = query.eq(column, value);
+      } else if (operator === 'neq') {
+        query = query.neq(column, value);
+      } else if (operator === 'gt') {
+        query = query.gt(column, value);
+      } else if (operator === 'gte') {
+        query = query.gte(column, value);
+      } else if (operator === 'lt') {
+        query = query.lt(column, value);
+      } else if (operator === 'lte') {
+        query = query.lte(column, value);
+      } else if (operator === 'like') {
+        query = query.like(column, value);
+      } else if (operator === 'ilike') {
+        query = query.ilike(column, value);
+      } else if (operator === 'in') {
+        query = query.in(column, value);
+      } else if (operator === 'is') {
+        query = query.is(column, value);
+      }
       return builder;
     },
     sort: (column: string, ascending: boolean = false) => {
@@ -845,13 +904,14 @@ export const createQueryBuilder = (supabase: SupabaseClient, table: string) => {
     execute: async <T>() => {
       try {
         const { data, error } = await query;
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
         return data as T;
       } catch (error) {
         console.error(`Query execution failed:`, error);
         throw error;
       }
-    }
-  };  
-
+    },
+  };
 };
