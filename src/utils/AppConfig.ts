@@ -1,6 +1,6 @@
-import type { LocalePrefix } from 'node_modules/next-intl/dist/types/src/routing/types';
-
 import { BILLING_INTERVAL, type PricingPlan } from '@/types/Subscription';
+
+type LocalePrefix = 'always' | 'as-needed' | 'never';
 
 const localePrefix: LocalePrefix = 'as-needed';
 
