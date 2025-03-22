@@ -17,11 +17,7 @@ type PublisherFilters = {
 export const publisherOperations = {
   // Create publisher
   create: async (publisherData: Publisher) => {
-    return db.insert(publishersSchema).values({ ...publisherData, defaultCurrency: 'USD', updatedAt: new Date() }).returning({
-      id: publishersSchema.id,
-      name: publishersSchema.name,
-      verified: publishersSchema.verified,
-    });
+    return db.insert(publishersSchema).values({ ...publisherData, defaultCurrency: 'USD', updatedAt: new Date() }).returning();
   },
 
   // Find publisher by ID (excluding soft-deleted records)
@@ -48,11 +44,7 @@ export const publisherOperations = {
       .update(publishersSchema)
       .set({ ...updateData, defaultCurrency: 'USD', updatedAt: new Date() })
       .where(eq(publishersSchema.id, id))
-      .returning({
-        id: publishersSchema.id,
-        name: publishersSchema.name,
-        updatedAt: publishersSchema.updatedAt,
-      });
+      .returning();
   },
 
   // Soft delete publisher
@@ -61,10 +53,7 @@ export const publisherOperations = {
       .update(publishersSchema)
       .set({ deletedAt: new Date() })
       .where(eq(publishersSchema.id, id))
-      .returning({
-        id: publishersSchema.id,
-        deletedAt: publishersSchema.deletedAt,
-      });
+      .returning();
   },
 
   // List publishers with pagination and filters
@@ -115,7 +104,7 @@ export const publisherOperations = {
   },
 
   // Update publisher statistics
-  updateStats: async (id: string, stats: { totalProjects: number; totalFundsRaised: string }) => {
+  updateStats: async (id: string, stats: { totalProjects?: number; totalFundsRaised?: string }) => {
     const publisher = await db.query.publishersSchema.findFirst({
       where: and(eq(publishersSchema.id, id), isNull(publishersSchema.deletedAt)),
     });
@@ -124,20 +113,20 @@ export const publisherOperations = {
       throw new Error(`Publisher with ID ${id} not found or has been deleted`);
     }
 
+    // Only update fields that are provided in stats
+    const updateData: any = { updatedAt: new Date() };
+    if (stats.totalProjects !== undefined) {
+      updateData.totalProjects = stats.totalProjects;
+    }
+    if (stats.totalFundsRaised !== undefined) {
+      updateData.totalFundsRaised = stats.totalFundsRaised;
+    }
+
     return db
       .update(publishersSchema)
-      .set({
-        totalProjects: stats.totalProjects,
-        totalFundsRaised: stats.totalFundsRaised,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(publishersSchema.id, id))
-      .returning({
-        id: publishersSchema.id,
-        totalProjects: publishersSchema.totalProjects,
-        totalFundsRaised: publishersSchema.totalFundsRaised,
-        updatedAt: publishersSchema.updatedAt,
-      });
+      .returning(); // Use without arguments
   },
 
   // Get top publishers by funds raised
