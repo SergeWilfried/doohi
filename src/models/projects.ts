@@ -3,9 +3,9 @@
 import { and, asc, count, desc, eq, gt, isNull, like, sql } from 'drizzle-orm';
 
 import { db } from '@/libs/DB';
-import type { Project, ProjectStatistics } from '@/types/types';
+import type { Project } from '@/types/types';
 
-import { projectMediaSchema, projectsSchema, projectTagsSchema, publishersSchema, tagsSchema } from './Schema';
+import { projectMediaSchema, projectsSchema, projectStats, projectTagsSchema, publishersSchema, tagsSchema } from './Schema';
 
 type ProjectFilters = {
   categoryId: string;
@@ -249,15 +249,14 @@ export const projectOperations = {
   },
 
   // Get project statistics
-  getProjectStats: async (id: string): Promise<ProjectStatistics | null> => {
-    const results = await db.execute(
-      sql`SELECT * FROM project_statistics WHERE id = ${id}`,
-    );
+  getProjectStats: async (id: string) => {
+    const results = await db
+      .select()
+      .from(projectStats)
+      .where(eq(projectStats.id, id))
+      .limit(1);
 
-    // Type assertion to convert the result to your expected type
-    // FIXME
-    const typedResults = results as unknown as ProjectStatistics[];
-    return typedResults[0] || null;
+    return results[0] || null;
   },
   // Update project status
   updateStatus: async (id: string, status: any) => {

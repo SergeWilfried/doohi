@@ -1,6 +1,7 @@
 import {
   bigint,
   boolean,
+  decimal,
   index,
   integer,
   json,
@@ -443,36 +444,21 @@ export const projectFundingStatusView = {
   `,
 };
 
-// View for project statistics
-export const projectStatisticsView = {
-  name: 'project_statistics',
-  query: `
-    SELECT 
-      p.id,
-      p.title,
-      COUNT(DISTINCT c.id) AS backer_count,
-      AVG(c.amount)::numeric(10,2) AS average_contribution,
-      p.goal,
-      p.raised,
-      p.currency,
-      (p.raised / p.goal * 100)::numeric(5,2) AS percentage_funded,
-      COUNT(DISTINCT com.id) AS comment_count,
-      COUNT(DISTINCT u.id) AS update_count,
-      p.view_count,
-      p.conversion_rate,
-      p.status,
-      p.created_at,
-      p.end_date,
-      CASE 
-        WHEN p.end_date > NOW() THEN 
-          EXTRACT(DAY FROM (p.end_date - NOW()))::integer
-        ELSE 0
-      END AS days_remaining
-    FROM projects p
-    LEFT JOIN contributions c ON p.id = c.project_id AND c.deleted_at IS NULL
-    LEFT JOIN comments com ON p.id = com.project_id AND com.deleted_at IS NULL
-    LEFT JOIN updates u ON p.id = u.project_id AND u.deleted_at IS NULL
-    WHERE p.deleted_at IS NULL
-    GROUP BY p.id, p.title, p.goal, p.raised, p.currency, p.status, p.created_at, p.end_date, p.view_count, p.conversion_rate
-  `,
-};
+export const projectStats = pgTable('project_statistics', {
+  id: text('id'),
+  title: text('title'),
+  backer_count: integer('backer_count'),
+  average_contribution: decimal('average_contribution', { precision: 10, scale: 2 }),
+  goal: decimal('goal'),
+  raised: decimal('raised'),
+  currency: text('currency'),
+  percentage_funded: decimal('percentage_funded', { precision: 5, scale: 2 }),
+  comment_count: integer('comment_count'),
+  update_count: integer('update_count'),
+  view_count: integer('view_count'),
+  conversion_rate: decimal('conversion_rate'),
+  status: text('status'),
+  created_at: timestamp('created_at'),
+  end_date: timestamp('end_date'),
+  days_remaining: integer('days_remaining'),
+});
