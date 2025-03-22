@@ -1,51 +1,58 @@
-import { count, desc, eq, gte, isNull, like } from 'drizzle-orm';
+import { and, count, desc, eq, gte, isNull, like } from 'drizzle-orm';
 
 import { db } from '@/libs/DB';
 import type { Publisher } from '@/types/types';
 
 import { publishersSchema } from './Schema';
+
 // ----------------- Publisher Operations -----------------
 
 type PublisherFilters = {
-  verified: boolean;
-  search: string;
-  status: string;
-  minTrustScore: number;
+  verified?: boolean;
+  search?: string;
+  status?: string;
+  minTrustScore?: number;
 };
+
 export const publisherOperations = {
   // Create publisher
   create: async (publisherData: Publisher) => {
-    return db.insert(publishersSchema).values(publisherData).returning();
-  },
-
-  // Find publisher by ID
-  findById: async (id: string) => {
-    return db.query.publishersSchema.findFirst({
-      where: eq(publishersSchema.id, id),
+    return db.insert(publishersSchema).values(publisherData).returning({
+      id: publishersSchema.id,
+      name: publishersSchema.name,
+      verified: publishersSchema.verified,
     });
   },
 
-  // Update publisher
+  // Find publisher by ID (excluding soft-deleted records)
+  findById: async (id: string) => {
+    return db.query.publishersSchema.findFirst({
+      where: and(eq(publishersSchema.id, id), isNull(publishersSchema.deletedAt)),
+    });
+  },
+
+  // Update publisher (only if not deleted)
   update: async (id: string, publisherData: Publisher) => {
-    // Check if publisher exists and is not deleted
     const publisher = await db.query.publishersSchema.findFirst({
-      where: (publishers) => {
-        return eq(publishers.id, id) && isNull(publishers.deletedAt);
-      },
+      where: and(eq(publishersSchema.id, id), isNull(publishersSchema.deletedAt)),
     });
 
     if (!publisher) {
       throw new Error(`Publisher with ID ${id} not found or has been deleted`);
     }
 
-    // Remove id from update data to prevent accidental ID change
+    // Exclude ID from update
     const { id: _, ...updateData } = publisherData;
 
     return db
       .update(publishersSchema)
       .set({ ...updateData, updatedAt: new Date() })
       .where(eq(publishersSchema.id, id))
-      .returning();
+      .returning({
+        id: publishersSchema.id,
+        name: publishersSchema.name,
+        updatedAt: publishersSchema.updatedAt,
+      });
   },
 
   // Soft delete publisher
@@ -54,64 +61,63 @@ export const publisherOperations = {
       .update(publishersSchema)
       .set({ deletedAt: new Date() })
       .where(eq(publishersSchema.id, id))
-      .returning();
+      .returning({
+        id: publishersSchema.id,
+        deletedAt: publishersSchema.deletedAt,
+      });
   },
 
   // List publishers with pagination and filters
-  list: async (page = 1, limit = 10, filters: PublisherFilters = {
-    verified: false,
-    search: '',
-    status: '',
-    minTrustScore: 0,
-  }) => {
+  list: async (
+    page = 1,
+    limit = 10,
+    filters: PublisherFilters = { verified: undefined, search: '', status: '', minTrustScore: 0 },
+  ) => {
     const offset = (page - 1) * limit;
 
-    let query = db.select().from(publishersSchema).where(isNull(publishersSchema.deletedAt));
+    // Build filter conditions
+    const conditions = [isNull(publishersSchema.deletedAt)];
 
-    // Apply filters
     if (filters.verified !== undefined) {
-      query = query.where(eq(publishersSchema.verified, filters.verified));
+      conditions.push(eq(publishersSchema.verified, filters.verified));
     }
-
     if (filters.search) {
-      query = query.where(like(publishersSchema.name, `%${filters.search}%`));
+      conditions.push(like(publishersSchema.name, `%${filters.search}%`));
     }
-
     if (filters.minTrustScore !== undefined) {
-      query = query.where(gte(publishersSchema.trustScore, filters.minTrustScore));
+      conditions.push(gte(publishersSchema.trustScore, filters.minTrustScore));
     }
 
-    const publishers = await query
+    // Query publishers
+    const publishers = await db
+      .select()
+      .from(publishersSchema)
+      .where(and(...conditions))
       .orderBy(desc(publishersSchema.totalFundsRaised))
       .limit(limit)
       .offset(offset);
 
+    // Count total publishers (using the same conditions)
     const totalCount = await db
       .select({ count: count() })
       .from(publishersSchema)
-      .where(isNull(publishersSchema.deletedAt));
+      .where(and(...conditions));
 
     return {
       publishers,
       pagination: {
-        total: totalCount[0]?.count,
+        total: totalCount[0]?.count || 0,
         page,
         limit,
-        pages: Math.ceil(totalCount[0]!.count / limit),
+        pages: Math.ceil((totalCount[0]?.count || 1) / limit),
       },
     };
   },
 
   // Update publisher statistics
-  updateStats: async (
-    id: string,
-    { totalProjects, totalFundsRaised }: { totalProjects: number; totalFundsRaised: string },
-  ) => {
-    // Check if publisher exists and is not deleted
+  updateStats: async (id: string, stats: { totalProjects: number; totalFundsRaised: string }) => {
     const publisher = await db.query.publishersSchema.findFirst({
-      where: (publishers) => {
-        return eq(publishers.id, id) && isNull(publishers.deletedAt);
-      },
+      where: and(eq(publishersSchema.id, id), isNull(publishersSchema.deletedAt)),
     });
 
     if (!publisher) {
@@ -121,12 +127,17 @@ export const publisherOperations = {
     return db
       .update(publishersSchema)
       .set({
-        totalProjects,
-        totalFundsRaised,
+        totalProjects: stats.totalProjects,
+        totalFundsRaised: stats.totalFundsRaised,
         updatedAt: new Date(),
       })
       .where(eq(publishersSchema.id, id))
-      .returning();
+      .returning({
+        id: publishersSchema.id,
+        totalProjects: publishersSchema.totalProjects,
+        totalFundsRaised: publishersSchema.totalFundsRaised,
+        updatedAt: publishersSchema.updatedAt,
+      });
   },
 
   // Get top publishers by funds raised

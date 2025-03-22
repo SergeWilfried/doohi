@@ -1,4 +1,4 @@
-import { count, eq, isNull } from 'drizzle-orm';
+import { and, count, eq, isNull, like } from 'drizzle-orm';
 
 import { db } from '@/libs/DB';
 import type { User } from '@/types/types';
@@ -61,25 +61,27 @@ export const userOperations = {
     role: '',
   }) => {
     const offset = (page - 1) * limit;
+    const conditions = [isNull(usersSchema.deletedAt)];
 
-    let query = db.select().from(usersSchema).where(isNull(usersSchema.deletedAt));
-
-    // Apply filters if any
-    if (filters.role) {
-      query = query.where(eq(usersSchema.role, filters.role));
+    if (filters.role !== undefined) {
+      conditions.push(like(usersSchema.role, `%${filters.role}%`));
     }
-
-    if (filters.organizationId) {
-      query = query.where(eq(usersSchema.organizationId, filters.organizationId));
+    if (filters.organizationId !== undefined) {
+      conditions.push(eq(usersSchema.organizationId, filters.organizationId));
     }
+    // Query publishers
+    const users = await db
+      .select()
+      .from(usersSchema)
+      .where(and(...conditions))
+      .limit(limit)
+      .offset(offset);
 
-    if (filters.verified !== undefined) {
-      query = query.where(eq(usersSchema.emailVerified, filters.verified));
-    }
-
-    const users = await query.limit(limit).offset(offset);
-    const totalCount = await db.select({ count: count() }).from(usersSchema).where(isNull(usersSchema.deletedAt));
-
+    // Count total publishers (using the same conditions)
+    const totalCount = await db
+      .select({ count: count() })
+      .from(usersSchema)
+      .where(and(...conditions));
     return {
       users,
       pagination: {

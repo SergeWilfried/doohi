@@ -1,11 +1,11 @@
 // ----------------- Project Operations -----------------
 
-import { and, asc, count, desc, eq, gt, isNull, like, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, isNull, like, sql } from 'drizzle-orm';
 
 import { db } from '@/libs/DB';
 import type { Project } from '@/types/types';
 
-import { projectMediaSchema, projectsSchema, projectTagsSchema, tagsSchema } from './Schema';
+import { projectMediaSchema, projectsSchema, projectTagsSchema, publishersSchema, tagsSchema } from './Schema';
 
 type ProjectFilters = {
   categoryId: string;
@@ -90,33 +90,14 @@ export const projectOperations = {
   }) => {
     const offset = (page - 1) * limit;
 
-    let query = db.select().from(projectsSchema).where(isNull(projectsSchema.deletedAt));
-
-    // Apply filters
-    if (filters.status) {
-      query = query.where(eq(projectsSchema.status, filters.status));
-    }
-
-    if (filters.categoryId) {
-      query = query.where(eq(projectsSchema.categoryId, filters.categoryId));
-    }
+    const conditions = [isNull(projectsSchema.deletedAt)];
 
     if (filters.publisherId) {
-      query = query.where(eq(projectsSchema.publisherId, filters.publisherId));
-    }
-
-    if (filters.featured !== undefined) {
-      query = query.where(eq(projectsSchema.featured, filters.featured));
+      conditions.push(like(publishersSchema.id, `%${filters.publisherId}%`));
     }
 
     if (filters.search) {
-      query = query.where(
-        or(
-          like(projectsSchema.title, `%${filters.search}%`),
-          like(projectsSchema.subtitle, `%${filters.search}%`),
-          like(projectsSchema.description, `%${filters.search}%`),
-        ),
-      );
+      conditions.push(like(publishersSchema.name, `%${filters.search}%`));
     }
 
     // Apply sorting
@@ -139,15 +120,20 @@ export const projectOperations = {
         orderByClause = desc(projectsSchema.createdAt);
     }
 
-    const projects = await query
-      .orderBy(orderByClause)
+    // Query publishers
+    const projects = await db
+      .select()
+      .from(projectsSchema)
+      .where(and(...conditions))
+      .orderBy(desc(orderByClause))
       .limit(limit)
       .offset(offset);
 
+    // Count total publishers (using the same conditions)
     const totalCount = await db
       .select({ count: count() })
       .from(projectsSchema)
-      .where(isNull(projectsSchema.deletedAt));
+      .where(and(...conditions));
 
     return {
       projects,

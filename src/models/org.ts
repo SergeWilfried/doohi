@@ -1,11 +1,11 @@
 // ----------------- Organization Operations -----------------
 
-import { count, eq, isNull, like } from 'drizzle-orm';
+import { and, count, eq, isNull, like } from 'drizzle-orm';
 
 import { db } from '@/libs/DB';
 import type { Organization } from '@/types/types';
 
-import { organizationSchema } from './Schema';
+import { organizationSchema, publishersSchema } from './Schema';
 
 type OrganizationFilters = {
   verified: boolean;
@@ -52,18 +52,23 @@ export const organizationOperations = {
   }) => {
     const offset = (page - 1) * limit;
 
-    let query = db.select().from(organizationSchema).where(isNull(organizationSchema.deletedAt));
+    const conditions = [isNull(organizationSchema.deletedAt)];
 
     // Apply filters
     if (filters.verified !== undefined) {
-      query = query.where(eq(organizationSchema.verified, filters.verified));
+      conditions.push(eq(publishersSchema.verified, filters.verified));
     }
 
     if (filters.search) {
-      query = query.where(like(organizationSchema.name, `%${filters.search}%`));
+      conditions.push(like(organizationSchema.name, `%${filters.search}%`));
     }
 
-    const orgs = await query.limit(limit).offset(offset);
+    const orgs = await db
+      .select()
+      .from(organizationSchema)
+      .where(and(...conditions))
+      .limit(limit)
+      .offset(offset);
     const totalCount = await db
       .select({ count: count() })
       .from(organizationSchema)
