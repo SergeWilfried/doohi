@@ -107,7 +107,7 @@ export type Project = {
   goal: string;
   minimumPledge: string;
   raised: string;
-  currency: Currency | null;
+  currency: Currency;
   daysLeft: number | null;
   endDate: Date;
   status: ProjectStatus;
