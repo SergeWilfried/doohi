@@ -6,6 +6,12 @@ import type { Publisher } from '@/types/types';
 import { publishersSchema } from './Schema';
 // ----------------- Publisher Operations -----------------
 
+type PublisherFilters = {
+  verified: boolean;
+  search: string;
+  status: string;
+  minTrustScore: number;
+};
 export const publisherOperations = {
   // Create publisher
   create: async (publisherData: Publisher) => {
@@ -38,7 +44,12 @@ export const publisherOperations = {
   },
 
   // List publishers with pagination and filters
-  list: async (page = 1, limit = 10, filters = {}) => {
+  list: async (page = 1, limit = 10, filters: PublisherFilters = {
+    verified: false,
+    search: '',
+    status: '',
+    minTrustScore: 0,
+  }) => {
     const offset = (page - 1) * limit;
 
     let query = db.select().from(publishersSchema).where(isNull(publishersSchema.deletedAt));
@@ -69,16 +80,19 @@ export const publisherOperations = {
     return {
       publishers,
       pagination: {
-        total: totalCount[0].count,
+        total: totalCount[0]?.count,
         page,
         limit,
-        pages: Math.ceil(totalCount[0].count / limit),
+        pages: Math.ceil(totalCount[0]!.count / limit),
       },
     };
   },
 
   // Update publisher statistics
-  updateStats: async (id, { totalProjects, totalFundsRaised }) => {
+  updateStats: async (id: string, { totalProjects, totalFundsRaised }: {
+    totalProjects: number;
+    totalFundsRaised: string;
+  }) => {
     return db
       .update(publishersSchema)
       .set({

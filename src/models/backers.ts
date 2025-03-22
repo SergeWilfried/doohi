@@ -112,10 +112,10 @@ export const backerOperations = {
     return {
       projects: backedProjects,
       pagination: {
-        total: totalCount[0].count,
+        total: totalCount[0]?.count,
         page,
         limit,
-        pages: Math.ceil(totalCount[0].count / limit),
+        pages: Math.ceil(totalCount[0]!.count / limit),
       },
     };
   },

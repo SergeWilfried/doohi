@@ -7,6 +7,12 @@ import type { Organization } from '@/types/types';
 
 import { organizationSchema } from './Schema';
 
+type OrganizationFilters = {
+  verified: boolean;
+  search: string;
+  status: string;
+};
+
 export const organizationOperations = {
   // Create new organization
   create: async (orgData: Organization) => {
@@ -39,7 +45,11 @@ export const organizationOperations = {
   },
 
   // List organizations with pagination and filters
-  list: async (page = 1, limit = 10, filters = {}) => {
+  list: async (page = 1, limit = 10, filters: OrganizationFilters = {
+    verified: false,
+    search: '',
+    status: '',
+  }) => {
     const offset = (page - 1) * limit;
 
     let query = db.select().from(organizationSchema).where(isNull(organizationSchema.deletedAt));
@@ -62,10 +72,10 @@ export const organizationOperations = {
     return {
       organizations: orgs,
       pagination: {
-        total: totalCount[0].count,
+        total: totalCount[0]?.count,
         page,
         limit,
-        pages: Math.ceil(totalCount[0].count / limit),
+        pages: Math.ceil(totalCount[0]!.count / limit),
       },
     };
   },

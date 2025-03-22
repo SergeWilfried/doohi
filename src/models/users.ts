@@ -6,6 +6,14 @@ import type { User } from '@/types/types';
 import { usersSchema } from './Schema';
 // ----------------- User Operations -----------------
 
+type UserFilters = {
+  verified: boolean;
+  search: string;
+  status: string;
+  organizationId: string;
+  role: string;
+};
+
 export const userOperations = {
   // Create new user
   create: async (userData: User) => {
@@ -45,7 +53,13 @@ export const userOperations = {
   },
 
   // List users with pagination
-  list: async (page = 1, limit = 10, filters = {}) => {
+  list: async (page = 1, limit = 10, filters: UserFilters = {
+    verified: false,
+    search: '',
+    status: '',
+    organizationId: '',
+    role: '',
+  }) => {
     const offset = (page - 1) * limit;
 
     let query = db.select().from(usersSchema).where(isNull(usersSchema.deletedAt));
@@ -69,10 +83,10 @@ export const userOperations = {
     return {
       users,
       pagination: {
-        total: totalCount[0].count,
+        total: totalCount[0]?.count,
         page,
         limit,
-        pages: Math.ceil(totalCount[0].count / limit),
+        pages: Math.ceil(totalCount[0]!.count / limit),
       },
     };
   },

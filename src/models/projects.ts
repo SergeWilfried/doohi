@@ -152,10 +152,10 @@ export const projectOperations = {
     return {
       projects,
       pagination: {
-        total: totalCount[0].count,
+        total: totalCount[0]?.count,
         page,
         limit,
-        pages: Math.ceil(totalCount[0].count / limit),
+        pages: Math.ceil(totalCount[0]!.count / limit),
       },
     };
   },
@@ -254,10 +254,10 @@ export const projectOperations = {
     return {
       projects: projects.map(p => p.project),
       pagination: {
-        total: totalCount[0].count,
+        total: totalCount[0]?.count,
         page,
         limit,
-        pages: Math.ceil(totalCount[0].count / limit),
+        pages: Math.ceil(totalCount[0]!.count / limit),
       },
     };
   },
