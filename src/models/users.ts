@@ -17,7 +17,7 @@ type UserFilters = {
 export const userOperations = {
   // Create new user
   create: async (userData: User) => {
-    return db.insert(usersSchema).values(userData).returning();
+    return db.insert(usersSchema).values({ ...userData, role: 'admin', updatedAt: new Date() }).returning();
   },
 
   // Find user by ID
@@ -38,7 +38,7 @@ export const userOperations = {
   update: async (id: string, userData: User) => {
     return db
       .update(usersSchema)
-      .set({ ...userData, updatedAt: new Date() })
+      .set({ ...userData, role: 'admin', updatedAt: new Date() })
       .where(eq(usersSchema.id, id))
       .returning();
   },

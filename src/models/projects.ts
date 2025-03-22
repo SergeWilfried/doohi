@@ -18,7 +18,7 @@ type ProjectFilters = {
 export const projectOperations = {
   // Create project
   create: async (projectData: Project) => {
-    return db.insert(projectsSchema).values(projectData).returning();
+    return db.insert(projectsSchema).values({ ...projectData, currency: 'USD', status: 'active', publisherType: 'user', updatedAt: new Date() }).returning();
   },
 
   // Find project by ID
@@ -32,7 +32,7 @@ export const projectOperations = {
   update: async (id: string, projectData: Project) => {
     return db
       .update(projectsSchema)
-      .set({ ...projectData, updatedAt: new Date() })
+      .set({ ...projectData, currency: 'USD', status: 'active', publisherType: 'user', updatedAt: new Date() })
       .where(eq(projectsSchema.id, id))
       .returning();
   },

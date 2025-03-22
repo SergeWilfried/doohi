@@ -17,7 +17,7 @@ type PublisherFilters = {
 export const publisherOperations = {
   // Create publisher
   create: async (publisherData: Publisher) => {
-    return db.insert(publishersSchema).values(publisherData).returning({
+    return db.insert(publishersSchema).values({ ...publisherData, defaultCurrency: 'USD', updatedAt: new Date() }).returning({
       id: publishersSchema.id,
       name: publishersSchema.name,
       verified: publishersSchema.verified,
@@ -46,7 +46,7 @@ export const publisherOperations = {
 
     return db
       .update(publishersSchema)
-      .set({ ...updateData, updatedAt: new Date() })
+      .set({ ...updateData, defaultCurrency: 'USD', updatedAt: new Date() })
       .where(eq(publishersSchema.id, id))
       .returning({
         id: publishersSchema.id,
