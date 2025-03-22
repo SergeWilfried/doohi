@@ -124,10 +124,18 @@ type Notification = {
   data?: Record<string, any>;
 };
 
-type QueryError = {
+class QueryError extends Error {
   code?: string;
   details?: string;
-} & Error;
+
+  constructor(message: string, code?: string, details?: string) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    // Maintain proper prototype chain in TS
+    Object.setPrototypeOf(this, QueryError.prototype);
+  }
+}
 
 // Error handling middleware
 const withErrorHandling = <T, Args extends any[]>(
@@ -143,8 +151,12 @@ const withErrorHandling = <T, Args extends any[]>(
       return result;
     } catch (error) {
       console.error(`${errorMessage}:`, error);
-      throw new QueryError(`${errorMessage}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new QueryError(
+        `${errorMessage}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
+  };
+};
   };
 };
 
