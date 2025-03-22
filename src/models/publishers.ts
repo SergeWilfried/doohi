@@ -21,9 +21,23 @@ export const publisherOperations = {
 
   // Update publisher
   update: async (id: string, publisherData: Publisher) => {
+    // Check if publisher exists and is not deleted
+    const publisher = await db.query.publishersSchema.findFirst({
+      where: (publishers) => {
+        return eq(publishers.id, id) && isNull(publishers.deletedAt);
+      },
+    });
+    
+    if (!publisher) {
+      throw new Error(`Publisher with ID ${id} not found or has been deleted`);
+    }
+    
+    // Remove id from update data to prevent accidental ID change
+    const { id: _, ...updateData } = publisherData;
+    
     return db
       .update(publishersSchema)
-      .set({ ...publisherData, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(publishersSchema.id, id))
       .returning();
   },
