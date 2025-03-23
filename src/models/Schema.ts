@@ -424,30 +424,6 @@ export const analyticsEventsSchema = pgTable(
   },
 );
 
-// View for project funding status
-export const projectFundingStatusView = {
-  name: 'project_funding_status',
-  query: `
-    SELECT 
-      p.id,
-      p.title,
-      p.goal,
-      p.raised,
-      p.currency,
-      p.status,
-      p.end_date,
-      CASE
-        WHEN p.raised >= p.goal THEN 'fully funded'
-        WHEN p.raised < p.goal AND p.end_date > NOW() THEN 'in progress'
-        WHEN p.raised < p.goal AND p.end_date <= NOW() THEN 'unfunded'
-        ELSE 'unknown'
-      END AS funding_status,
-      (p.raised / p.goal * 100)::numeric(5,2) AS funding_percentage
-    FROM projects p
-    WHERE p.deleted_at IS NULL
-  `,
-};
-
 export const projectStats = pgTable('project_statistics', {
   id: text('id'),
   title: text('title'),
@@ -682,53 +658,6 @@ export const payoutLogsSchema = pgTable(
     };
   },
 );
-
-// View for publisher payout summary
-export const publisherPayoutSummaryView = {
-  name: 'publisher_payout_summary',
-  query: `
-    SELECT 
-      p.publisher_id,
-      pub.name AS publisher_name,
-      COUNT(p.id) AS total_payouts,
-      SUM(p.amount) AS total_amount_paid,
-      SUM(p.fee) AS total_fees_paid,
-      SUM(p.net_amount) AS total_net_amount,
-      p.currency,
-      COUNT(CASE WHEN p.status = 'pending' THEN 1 END) AS pending_payouts,
-      SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END) AS pending_amount,
-      MAX(p.processed_date) AS last_payout_date
-    FROM payouts p
-    JOIN publishers pub ON p.publisher_id = pub.id
-    WHERE p.deleted_at IS NULL
-    GROUP BY p.publisher_id, pub.name, p.currency
-  `,
-};
-
-// View for project payout status
-export const projectPayoutStatusView = {
-  name: 'project_payout_status',
-  query: `
-    SELECT 
-      proj.id AS project_id,
-      proj.title AS project_title,
-      proj.raised AS total_raised,
-      COALESCE(SUM(p.amount), 0) AS total_paid_out,
-      proj.raised - COALESCE(SUM(p.amount), 0) AS remaining_to_pay,
-      proj.currency,
-      proj.status AS project_status,
-      CASE
-        WHEN proj.raised <= COALESCE(SUM(p.amount), 0) THEN 'fully_paid'
-        WHEN proj.raised > COALESCE(SUM(p.amount), 0) AND proj.status = 'funded' THEN 'partially_paid'
-        WHEN proj.status = 'funded' AND COALESCE(SUM(p.amount), 0) = 0 THEN 'not_paid'
-        ELSE 'not_applicable'
-      END AS payout_status
-    FROM projects proj
-    LEFT JOIN payouts p ON proj.id = p.project_id AND p.status = 'completed'
-    WHERE proj.deleted_at IS NULL
-    GROUP BY proj.id, proj.title, proj.raised, proj.currency, proj.status
-  `,
-}; // Adjust the import path as needed
 
 // Relations for Categories
 export const categoriesRelations = relations(categoriesSchema, ({ many }) => ({
