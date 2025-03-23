@@ -46,7 +46,7 @@ export const addContribution = async (data: TContribution) => {
   await canAddContribution();
 
   // Input validation
-  if (!data.amount || data.amount <= 0) {
+  if (!data.amount || Number(data.amount) <= 0) {
     throw new Error('Invalid contribution amount');
   }
 
