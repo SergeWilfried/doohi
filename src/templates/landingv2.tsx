@@ -7,15 +7,13 @@ import { ProjectCard } from '@/components/project-card';
 import { StartProjectOverlay } from '@/components/start-project-overlay';
 import { Button } from '@/components/ui/button';
 import projectsData from '@/data/project.json';
+import type { TProject } from '@/models/Schema';
 
 const categories = Array.from(new Set(projectsData.map(project => project.category)));
 
-export default function LandingPageV2() {
+export default function LandingPageV2({ data }: { data: TProject[] }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isStartProjectOpen, setIsStartProjectOpen] = useState(false);
-
-  const filteredProjects
-    = selectedCategory === 'All' ? projectsData : projectsData.filter(project => project.category === selectedCategory);
 
   return (
     <div className="space-y-12">
@@ -34,7 +32,7 @@ export default function LandingPageV2() {
         onCategoryChange={setSelectedCategory}
       />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {filteredProjects.map(project => (
+        {data.map(project => (
           <ProjectCard key={project.id} project={project} />
         ))}
       </div>

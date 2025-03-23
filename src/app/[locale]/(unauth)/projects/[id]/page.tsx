@@ -1,10 +1,9 @@
-
 import { useTranslations } from 'next-intl';
-import { TitleBar } from '@/features/dashboard/TitleBar';
+
 import ProjectPage from '@/components/projects';
+import { TitleBar } from '@/features/dashboard/TitleBar';
 
-const ProjectsIndexPage = ({ params }: { params: { id: string } }) => {
-
+const ProjectsIndexPage = async ({ params }: { params: { id: string } }) => {
   const t = useTranslations('DashboardIndex');
 
   return (
