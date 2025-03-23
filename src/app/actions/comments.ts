@@ -45,6 +45,27 @@ async function canDeleteComment(commentId: string) {
   return comment.userId === (sessionClaims.metadata as { userId: string }).userId;
 }
 
+// Helper function to check if user can modify comment
+async function canModifyComment(commentId: string) {
+  const { sessionClaims } = await auth();
+  if (!sessionClaims) {
+    throw new Error('Unauthorized: No session found');
+  }
+
+  // Admins can modify any comment
+  if (await checkRole('admin')) {
+    return true;
+  }
+
+  // Users can only modify their own comments
+  const comment = await getComment(commentId);
+  if (!comment) {
+    throw new Error('Comment not found');
+  }
+
+  return comment.userId === (sessionClaims.metadata as { userId: string }).userId;
+}
+
 export const addComment = async (data: TComment) => {
   const insertedComment = await db.insert(commentsSchema).values({ ...data });
   // Invalidate cache
@@ -54,6 +75,11 @@ export const addComment = async (data: TComment) => {
 };
 
 export const updateComment = async (data: TComment) => {
+  const canModify = await canModifyComment(data.id);
+  if (!canModify) {
+    throw new Error('Unauthorized: Cannot update this comment');
+  }
+
   const response = await db.update(commentsSchema)
     .set({ ...data })
     .where(eq(commentsSchema.id, data.id));
@@ -62,8 +88,8 @@ export const updateComment = async (data: TComment) => {
 };
 
 export const deleteComment = async (id: string) => {
-  const canDelete = await canDeleteComment(id);
-  if (!canDelete) {
+  const canModify = await canDeleteComment(id);
+  if (!canModify) {
     throw new Error('Unauthorized: Cannot delete this comment');
   }
 

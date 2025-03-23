@@ -8,7 +8,7 @@ import { db } from '@/libs/DB';
 import { projectsSchema, type TProject } from '@/models/Schema';
 import { checkRole } from '@/utils/roles';
 
-export const getProject = async (id: string) => {
+export const getProject = async (id: string, skipAccessCheck = false) => {
   const project = await db
     .select()
     .from(projectsSchema)
@@ -18,7 +18,9 @@ export const getProject = async (id: string) => {
   if (!project[0]) {
     return null;
   }
-  await canAccessProject(id);
+  if (!skipAccessCheck) {
+    await canAccessProject(id);
+  }
   return project[0];
 };
 export const getProjects = async () => {
@@ -45,7 +47,7 @@ async function canAccessProject(projectId?: string) {
     if (!projectId) {
       return true;
     } // For listing projects
-    const project = await getProject(projectId);
+    const project = await getProject(projectId, true);
     return project?.publisherId === (sessionClaims.metadata as { publisherId: string }).publisherId;
   }
 

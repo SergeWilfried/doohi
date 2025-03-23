@@ -23,10 +23,52 @@ async function canDeleteContribution() {
   throw new Error('Unauthorized: Only admins can delete contributions');
 }
 
+// Add this helper function near the top of the file
+async function canAddContribution() {
+  const { sessionClaims } = await auth();
+  if (!sessionClaims) {
+    throw new Error('Unauthorized: No session found');
+  }
+
+  // Allow both admins and publishers to add contributions
+  const isAdmin = await checkRole('admin');
+  const isPublisher = await checkRole('publisher');
+
+  if (!isAdmin && !isPublisher) {
+    throw new Error('Unauthorized: Insufficient permissions');
+  }
+
+  return true;
+}
+
 export const addContribution = async (data: TContribution) => {
-  const response = await db.insert(contributionsSchema).values({ ...data });
-  revalidateTag('contributions');
-  return response;
+  // Permission check
+  await canAddContribution();
+
+  // Input validation
+  if (!data.amount || data.amount <= 0) {
+    throw new Error('Invalid contribution amount');
+  }
+
+  if (!data.publisherId) {
+    throw new Error('Publisher ID is required');
+  }
+
+  if (!data.userId) {
+    throw new Error('User ID is required');
+  }
+
+  try {
+    const response = await db.insert(contributionsSchema).values({
+      ...data,
+      createdAt: new Date(), // Ensure we set the creation timestamp
+    });
+    revalidateTag('contributions');
+    return response;
+  } catch (error) {
+    // Handle specific database errors if needed
+    throw new Error(`Failed to add contribution: ${(error as Error).message}`);
+  }
 };
 
 export const updateContribution = async (data: TContribution) => {
