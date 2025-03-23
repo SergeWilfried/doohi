@@ -28,25 +28,25 @@ const categoryColors = {
 
 export function ProjectCard({ project }: { project: TProject }) {
   const progress = (Number(project.raised) / Number(project.goal)) * 100;
-  const Icon = categoryIcons[project.category as keyof typeof categoryIcons];
+  const Icon = categoryIcons.Technology;
 
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
         <div className="mb-2 flex items-center justify-between">
           <CardTitle>{project.title}</CardTitle>
-          <Icon className={`size-5 ${categoryColors[project.category as keyof typeof categoryColors]}`} />
+          <Icon className={`size-5 ${categoryColors.Environment}`} />
         </div>
-        <div className={`text-sm ${categoryColors[project.category as keyof typeof categoryColors]}`}>
-          {project.category}
+        <div className={`text-sm ${categoryColors.Education}`}>
+          Education
         </div>
         <div className="flex items-center text-sm text-muted-foreground">
           <Building2 className="mr-1 size-4" />
-          <span>{project.publisher.name}</span>
+          <span>Serge</span>
           <span className="ml-2 rounded bg-secondary px-1 py-0.5 text-xs text-secondary-foreground">
             Trust:
             {' '}
-            {project.publisher.trustScore}
+            {85}
             %
           </span>
         </div>
