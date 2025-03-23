@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { projectSchema } from '@/folder/schema';
+import { projectsSchema } from '@/models/Schema';
 import type { Category, Project } from '@/types/types';
 
 type StartProjectOverlayProps = {
@@ -38,7 +38,7 @@ export function StartProjectOverlay({ isOpen, onClose }: StartProjectOverlayProp
     handleSubmit,
     formState: { errors },
   } = useForm<Project>({
-    resolver: zodResolver(projectSchema),
+    resolver: zodResolver(projectsSchema),
     mode: 'onChange',
     criteriaMode: 'all',
     shouldFocusError: true,

@@ -1,6 +1,8 @@
+import { relations, sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
+  date,
   decimal,
   index,
   integer,
@@ -13,6 +15,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import * as zod from 'zod';
 
 // Define enums
 export const userRoleEnum = pgEnum('user_role', ['backer', 'publisher', 'admin']);
@@ -462,3 +466,737 @@ export const projectStats = pgTable('project_statistics', {
   end_date: timestamp('end_date'),
   days_remaining: integer('days_remaining'),
 });
+
+// Define payout status enum
+export const payoutStatusEnum = pgEnum('payout_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+  'canceled',
+]);
+
+// Define payout method enum
+export const payoutMethodEnum = pgEnum('payout_method', [
+  'bank_transfer',
+  'paypal',
+  'stripe',
+  'check',
+  'crypto',
+]);
+
+// Define payout frequency enum
+export const payoutFrequencyEnum = pgEnum('payout_frequency', [
+  'one_time',
+  'weekly',
+  'biweekly',
+  'monthly',
+]);
+
+// Payment accounts table to store publisher payment details
+export const paymentAccountsSchema = pgTable(
+  'payment_accounts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    publisherId: uuid('publisher_id').references(() => publishersSchema.id).notNull(),
+    accountType: payoutMethodEnum('account_type').notNull(),
+    accountName: text('account_name').notNull(),
+    accountEmail: text('account_email'),
+    accountDetails: text('account_details'),
+    routingNumber: text('routing_number'),
+    accountNumber: text('account_number'),
+    bankName: text('bank_name'),
+    bankAddress: text('bank_address'),
+    swiftCode: text('swift_code'),
+    paypalEmail: text('paypal_email'),
+    stripeAccountId: text('stripe_account_id'),
+    isVerified: boolean('is_verified').default(false),
+    isDefault: boolean('is_default').default(false),
+    verificationDocuments: text('verification_documents'),
+    ...timestamps,
+  },
+  (table) => {
+    return {
+      publisherIdIdx: index('idx_payment_accounts_publisher_id').on(table.publisherId),
+      uniqueDefaultAccount: uniqueIndex('unique_default_account_per_publisher').on(
+        table.publisherId,
+        table.isDefault,
+      ).where(sql`${table.isDefault} = true`),
+    };
+  },
+);
+
+// Relations for payment accounts
+export const paymentAccountsRelations = relations(paymentAccountsSchema, ({ one }) => ({
+  publisher: one(publishersSchema, {
+    fields: [paymentAccountsSchema.publisherId],
+    references: [publishersSchema.id],
+  }),
+}));
+
+// Payout schedules table
+export const payoutSchedulesSchema = pgTable(
+  'payout_schedules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    publisherId: uuid('publisher_id').references(() => publishersSchema.id).notNull(),
+    projectId: uuid('project_id').references(() => projectsSchema.id),
+    frequency: payoutFrequencyEnum('frequency').notNull(),
+    nextPayoutDate: date('next_payout_date').notNull(),
+    minimumPayoutAmount: numeric('minimum_payout_amount').notNull().default('100'),
+    isActive: boolean('is_active').default(true),
+    dayOfWeek: integer('day_of_week'), // 0-6 for weekly
+    dayOfMonth: integer('day_of_month'), // 1-31 for monthly
+    ...timestamps,
+  },
+  (table) => {
+    return {
+      publisherIdIdx: index('idx_payout_schedules_publisher_id').on(table.publisherId),
+      projectIdIdx: index('idx_payout_schedules_project_id').on(table.projectId),
+    };
+  },
+);
+
+// Relations for payout schedules
+export const payoutSchedulesRelations = relations(payoutSchedulesSchema, ({ one }) => ({
+  publisher: one(publishersSchema, {
+    fields: [payoutSchedulesSchema.publisherId],
+    references: [publishersSchema.id],
+  }),
+  project: one(projectsSchema, {
+    fields: [payoutSchedulesSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+}));
+
+// Payouts table for actual payouts
+export const payoutsSchema = pgTable(
+  'payouts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    publisherId: uuid('publisher_id').references(() => publishersSchema.id).notNull(),
+    projectId: uuid('project_id').references(() => projectsSchema.id),
+    paymentAccountId: uuid('payment_account_id').references(() => paymentAccountsSchema.id).notNull(),
+    amount: numeric('amount').notNull(),
+    fee: numeric('fee').notNull().default('0'),
+    netAmount: numeric('net_amount').notNull(),
+    currency: text('currency').notNull().default('USD'),
+    status: payoutStatusEnum('status').notNull().default('pending'),
+    scheduledDate: date('scheduled_date'),
+    processedDate: timestamp('processed_date', { mode: 'date' }),
+    transactionId: text('transaction_id'),
+    reference: text('reference'),
+    notes: text('notes'),
+    processedBy: uuid('processed_by').references(() => usersSchema.id),
+    failureReason: text('failure_reason'),
+    batchId: text('batch_id'), // For grouping multiple payouts processed together
+    ...timestamps,
+  },
+  (table) => {
+    return {
+      publisherIdIdx: index('idx_payouts_publisher_id').on(table.publisherId),
+      projectIdIdx: index('idx_payouts_project_id').on(table.projectId),
+      paymentAccountIdIdx: index('idx_payouts_payment_account_id').on(table.paymentAccountId),
+      statusIdx: index('idx_payouts_status').on(table.status),
+      scheduledDateIdx: index('idx_payouts_scheduled_date').on(table.scheduledDate),
+      batchIdIdx: index('idx_payouts_batch_id').on(table.batchId),
+    };
+  },
+);
+
+// Relations for payouts
+export const payoutsRelations = relations(payoutsSchema, ({ one }) => ({
+  publisher: one(publishersSchema, {
+    fields: [payoutsSchema.publisherId],
+    references: [publishersSchema.id],
+  }),
+  project: one(projectsSchema, {
+    fields: [payoutsSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+  paymentAccount: one(paymentAccountsSchema, {
+    fields: [payoutsSchema.paymentAccountId],
+    references: [paymentAccountsSchema.id],
+  }),
+  processor: one(usersSchema, {
+    fields: [payoutsSchema.processedBy],
+    references: [usersSchema.id],
+  }),
+}));
+
+// Tax information table
+export const taxInformationSchema = pgTable(
+  'tax_information',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    publisherId: uuid('publisher_id').references(() => publishersSchema.id).notNull(),
+    taxIdType: text('tax_id_type').notNull(), // SSN, EIN, VAT, etc.
+    taxIdNumber: text('tax_id_number').notNull(),
+    legalName: text('legal_name').notNull(),
+    businessType: text('business_type'), // Individual, LLC, Corporation, etc.
+    taxCountry: text('tax_country').notNull(),
+    taxState: text('tax_state'),
+    taxFormSubmitted: boolean('tax_form_submitted').default(false),
+    taxFormType: text('tax_form_type'), // W-9, W-8BEN, etc.
+    taxFormSubmissionDate: timestamp('tax_form_submission_date', { mode: 'date' }),
+    taxFormVerified: boolean('tax_form_verified').default(false),
+    taxFormVerificationDate: timestamp('tax_form_verification_date', { mode: 'date' }),
+    taxWithholdingRate: numeric('tax_withholding_rate').default('0'),
+    ...timestamps,
+  },
+  (table) => {
+    return {
+      publisherIdIdx: index('idx_tax_information_publisher_id').on(table.publisherId),
+      uniquePublisherTaxInfo: uniqueIndex('unique_publisher_tax_info').on(table.publisherId),
+    };
+  },
+);
+
+// Relations for tax information
+export const taxInformationRelations = relations(taxInformationSchema, ({ one }) => ({
+  publisher: one(publishersSchema, {
+    fields: [taxInformationSchema.publisherId],
+    references: [publishersSchema.id],
+  }),
+}));
+
+// Payout logs for detailed tracking and auditing
+export const payoutLogsSchema = pgTable(
+  'payout_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    payoutId: uuid('payout_id').references(() => payoutsSchema.id).notNull(),
+    action: text('action').notNull(), // created, updated, processed, failed, etc.
+    status: payoutStatusEnum('status').notNull(),
+    message: text('message'),
+    metadata: text('metadata'),
+    performedBy: uuid('performed_by').references(() => usersSchema.id),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => {
+    return {
+      payoutIdIdx: index('idx_payout_logs_payout_id').on(table.payoutId),
+      actionIdx: index('idx_payout_logs_action').on(table.action),
+      statusIdx: index('idx_payout_logs_status').on(table.status),
+      createdAtIdx: index('idx_payout_logs_created_at').on(table.createdAt),
+    };
+  },
+);
+
+// View for publisher payout summary
+export const publisherPayoutSummaryView = {
+  name: 'publisher_payout_summary',
+  query: `
+    SELECT 
+      p.publisher_id,
+      pub.name AS publisher_name,
+      COUNT(p.id) AS total_payouts,
+      SUM(p.amount) AS total_amount_paid,
+      SUM(p.fee) AS total_fees_paid,
+      SUM(p.net_amount) AS total_net_amount,
+      p.currency,
+      COUNT(CASE WHEN p.status = 'pending' THEN 1 END) AS pending_payouts,
+      SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END) AS pending_amount,
+      MAX(p.processed_date) AS last_payout_date
+    FROM payouts p
+    JOIN publishers pub ON p.publisher_id = pub.id
+    WHERE p.deleted_at IS NULL
+    GROUP BY p.publisher_id, pub.name, p.currency
+  `,
+};
+
+// View for project payout status
+export const projectPayoutStatusView = {
+  name: 'project_payout_status',
+  query: `
+    SELECT 
+      proj.id AS project_id,
+      proj.title AS project_title,
+      proj.raised AS total_raised,
+      COALESCE(SUM(p.amount), 0) AS total_paid_out,
+      proj.raised - COALESCE(SUM(p.amount), 0) AS remaining_to_pay,
+      proj.currency,
+      proj.status AS project_status,
+      CASE
+        WHEN proj.raised <= COALESCE(SUM(p.amount), 0) THEN 'fully_paid'
+        WHEN proj.raised > COALESCE(SUM(p.amount), 0) AND proj.status = 'funded' THEN 'partially_paid'
+        WHEN proj.status = 'funded' AND COALESCE(SUM(p.amount), 0) = 0 THEN 'not_paid'
+        ELSE 'not_applicable'
+      END AS payout_status
+    FROM projects proj
+    LEFT JOIN payouts p ON proj.id = p.project_id AND p.status = 'completed'
+    WHERE proj.deleted_at IS NULL
+    GROUP BY proj.id, proj.title, proj.raised, proj.currency, proj.status
+  `,
+}; // Adjust the import path as needed
+
+// Relations for Categories
+export const categoriesRelations = relations(categoriesSchema, ({ many }) => ({
+  projects: many(projectsSchema),
+}));
+
+// Relations for Tags
+export const tagsRelations = relations(tagsSchema, ({ many }) => ({
+  projectTags: many(projectTagsSchema),
+}));
+
+// Relations for Organizations
+export const organizationsRelations = relations(organizationsSchema, ({ many }) => ({
+  users: many(usersSchema),
+}));
+
+// Relations for Organization (single)
+export const organizationRelations = relations(organizationSchema, ({ many }) => ({
+  users: many(usersSchema),
+}));
+
+// Relations for Users
+export const usersRelations = relations(usersSchema, ({ one, many }) => ({
+  organization: one(organizationsSchema, {
+    fields: [usersSchema.organizationId],
+    references: [organizationsSchema.id],
+  }),
+  addresses: many(addressesSchema),
+  notifications: many(notificationsSchema),
+  comments: many(commentsSchema),
+  followers: many(userFollowsSchema, { relationName: 'followers' }),
+  following: many(userFollowsSchema, { relationName: 'following' }),
+  backerProfile: one(backersSchema, {
+    fields: [usersSchema.id],
+    references: [backersSchema.userId],
+  }),
+  analyticsEvents: many(analyticsEventsSchema),
+}));
+
+// Relations for User Follows
+export const userFollowsRelations = relations(userFollowsSchema, ({ one }) => ({
+  follower: one(usersSchema, {
+    fields: [userFollowsSchema.followerId],
+    references: [usersSchema.id],
+    relationName: 'followers',
+  }),
+  following: one(usersSchema, {
+    fields: [userFollowsSchema.followingId],
+    references: [usersSchema.id],
+    relationName: 'following',
+  }),
+}));
+
+// Relations for Publishers
+export const publishersRelations = relations(publishersSchema, ({ many, one }) => ({
+  projects: many(projectsSchema),
+  paymentAccounts: many(paymentAccountsSchema),
+  payoutSchedules: many(payoutSchedulesSchema),
+  payouts: many(payoutsSchema),
+  taxInformation: one(taxInformationSchema, {
+    fields: [publishersSchema.id],
+    references: [taxInformationSchema.publisherId],
+  }),
+}));
+
+// Relations for Projects
+export const projectsRelations = relations(projectsSchema, ({ one, many }) => ({
+  publisher: one(publishersSchema, {
+    fields: [projectsSchema.publisherId],
+    references: [publishersSchema.id],
+  }),
+  category: one(categoriesSchema, {
+    fields: [projectsSchema.categoryId],
+    references: [categoriesSchema.id],
+  }),
+  media: many(projectMediaSchema),
+  projectTags: many(projectTagsSchema),
+  rewards: many(rewardsSchema),
+  comments: many(commentsSchema),
+  updates: many(updatesSchema),
+  contributions: many(contributionsSchema),
+  analyticsEvents: many(analyticsEventsSchema),
+  payouts: many(payoutsSchema),
+  payoutSchedules: many(payoutSchedulesSchema),
+}));
+
+// Relations for Project Media
+export const projectMediaRelations = relations(projectMediaSchema, ({ one }) => ({
+  project: one(projectsSchema, {
+    fields: [projectMediaSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+}));
+
+// Relations for Project Tags
+export const projectTagsRelations = relations(projectTagsSchema, ({ one }) => ({
+  project: one(projectsSchema, {
+    fields: [projectTagsSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+  tag: one(tagsSchema, {
+    fields: [projectTagsSchema.tagId],
+    references: [tagsSchema.id],
+  }),
+}));
+
+// Relations for Backers
+export const backersRelations = relations(backersSchema, ({ one, many }) => ({
+  user: one(usersSchema, {
+    fields: [backersSchema.userId],
+    references: [usersSchema.id],
+  }),
+  contributions: many(contributionsSchema),
+}));
+
+// Relations for Addresses
+export const addressesRelations = relations(addressesSchema, ({ one, many }) => ({
+  user: one(usersSchema, {
+    fields: [addressesSchema.userId],
+    references: [usersSchema.id],
+  }),
+  contributions: many(contributionsSchema),
+}));
+
+// Relations for Rewards
+export const rewardsRelations = relations(rewardsSchema, ({ one, many }) => ({
+  project: one(projectsSchema, {
+    fields: [rewardsSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+  contributions: many(contributionsSchema),
+}));
+
+// Relations for Comments
+export const commentsRelations = relations(commentsSchema, ({ one, many }) => ({
+  project: one(projectsSchema, {
+    fields: [commentsSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+  user: one(usersSchema, {
+    fields: [commentsSchema.userId],
+    references: [usersSchema.id],
+  }),
+  parentComment: one(commentsSchema, {
+    fields: [commentsSchema.parentCommentId],
+    references: [commentsSchema.id],
+  }),
+  replies: many(commentsSchema),
+}));
+
+// Relations for Updates
+export const updatesRelations = relations(updatesSchema, ({ one }) => ({
+  project: one(projectsSchema, {
+    fields: [updatesSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+}));
+
+// Relations for Contributions
+export const contributionsRelations = relations(contributionsSchema, ({ one }) => ({
+  backer: one(backersSchema, {
+    fields: [contributionsSchema.backerId],
+    references: [backersSchema.id],
+  }),
+  project: one(projectsSchema, {
+    fields: [contributionsSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+  reward: one(rewardsSchema, {
+    fields: [contributionsSchema.rewardId],
+    references: [rewardsSchema.id],
+  }),
+  address: one(addressesSchema, {
+    fields: [contributionsSchema.addressId],
+    references: [addressesSchema.id],
+  }),
+}));
+
+// Relations for Notifications
+export const notificationsRelations = relations(notificationsSchema, ({ one }) => ({
+  user: one(usersSchema, {
+    fields: [notificationsSchema.userId],
+    references: [usersSchema.id],
+  }),
+}));
+
+// Relations for Analytics Events
+export const analyticsEventsRelations = relations(analyticsEventsSchema, ({ one }) => ({
+  user: one(usersSchema, {
+    fields: [analyticsEventsSchema.userId],
+    references: [usersSchema.id],
+  }),
+  project: one(projectsSchema, {
+    fields: [analyticsEventsSchema.projectId],
+    references: [projectsSchema.id],
+  }),
+}));
+
+// Category types
+export const CategorySchema = createSelectSchema(categoriesSchema);
+export const NewCategorySchema = createInsertSchema(categoriesSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TCategory = zod.infer<typeof CategorySchema>;
+export type TNewCategory = zod.infer<typeof NewCategorySchema>;
+
+// Tag types
+export const TagSchema = createSelectSchema(tagsSchema);
+export const NewTagSchema = createInsertSchema(tagsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TTag = zod.infer<typeof TagSchema>;
+export type TNewTag = zod.infer<typeof NewTagSchema>;
+
+// Organization types
+export const OrganizationSchema = createSelectSchema(organizationsSchema);
+export const NewOrganizationSchema = createInsertSchema(organizationsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TOrganization = zod.infer<typeof OrganizationSchema>;
+export type TNewOrganization = zod.infer<typeof NewOrganizationSchema>;
+
+// User types
+export const UserSchema = createSelectSchema(usersSchema);
+export const NewUserSchema = createInsertSchema(usersSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  lastLoginAt: true,
+});
+export type TUser = zod.infer<typeof UserSchema>;
+export type TNewUser = zod.infer<typeof NewUserSchema>;
+
+// UserFollow types
+export const UserFollowSchema = createSelectSchema(userFollowsSchema);
+export const NewUserFollowSchema = createInsertSchema(userFollowsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TUserFollow = zod.infer<typeof UserFollowSchema>;
+export type TNewUserFollow = zod.infer<typeof NewUserFollowSchema>;
+
+// Publisher types
+export const PublisherSchema = createSelectSchema(publishersSchema);
+export const NewPublisherSchema = createInsertSchema(publishersSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TPublisher = zod.infer<typeof PublisherSchema>;
+export type TNewPublisher = zod.infer<typeof NewPublisherSchema>;
+
+// Project types
+export const ProjectSchema = createSelectSchema(projectsSchema);
+export const NewProjectSchema = createInsertSchema(projectsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TProject = zod.infer<typeof ProjectSchema>;
+export type TNewProject = zod.infer<typeof NewProjectSchema>;
+
+// ProjectMedia types
+export const ProjectMediaSchema = createSelectSchema(projectMediaSchema);
+export const NewProjectMediaSchema = createInsertSchema(projectMediaSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TProjectMedia = zod.infer<typeof ProjectMediaSchema>;
+export type TNewProjectMedia = zod.infer<typeof NewProjectMediaSchema>;
+
+// ProjectTag types
+export const ProjectTagSchema = createSelectSchema(projectTagsSchema);
+export const NewProjectTagSchema = createInsertSchema(projectTagsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TProjectTag = zod.infer<typeof ProjectTagSchema>;
+export type TNewProjectTag = zod.infer<typeof NewProjectTagSchema>;
+
+// Backer types
+export const BackerSchema = createSelectSchema(backersSchema);
+export const NewBackerSchema = createInsertSchema(backersSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TBacker = zod.infer<typeof BackerSchema>;
+export type TNewBacker = zod.infer<typeof NewBackerSchema>;
+
+// Address types
+export const AddressSchema = createSelectSchema(addressesSchema);
+export const NewAddressSchema = createInsertSchema(addressesSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TAddress = zod.infer<typeof AddressSchema>;
+export type TNewAddress = zod.infer<typeof NewAddressSchema>;
+
+// Reward types
+export const RewardSchema = createSelectSchema(rewardsSchema);
+export const NewRewardSchema = createInsertSchema(rewardsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TReward = zod.infer<typeof RewardSchema>;
+export type TNewReward = zod.infer<typeof NewRewardSchema>;
+
+// Comment types
+export const CommentSchema = createSelectSchema(commentsSchema);
+export const NewCommentSchema = createInsertSchema(commentsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TComment = zod.infer<typeof CommentSchema>;
+export type TNewComment = zod.infer<typeof NewCommentSchema>;
+
+// Update types
+export const UpdateSchema = createSelectSchema(updatesSchema);
+export const NewUpdateSchema = createInsertSchema(updatesSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TUpdate = zod.infer<typeof UpdateSchema>;
+export type TNewUpdate = zod.infer<typeof NewUpdateSchema>;
+
+// Contribution types
+export const ContributionSchema = createSelectSchema(contributionsSchema);
+export const NewContributionSchema = createInsertSchema(contributionsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TContribution = zod.infer<typeof ContributionSchema>;
+export type TNewContribution = zod.infer<typeof NewContributionSchema>;
+
+// Notification types
+export const NotificationSchema = createSelectSchema(notificationsSchema);
+export const NewNotificationSchema = createInsertSchema(notificationsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+export type TNotification = zod.infer<typeof NotificationSchema>;
+export type TNewNotification = zod.infer<typeof NewNotificationSchema>;
+
+// AnalyticsEvent types
+export const AnalyticsEventSchema = createSelectSchema(analyticsEventsSchema);
+export const NewAnalyticsEventSchema = createInsertSchema(analyticsEventsSchema).omit({
+  id: true,
+  createdAt: true,
+});
+export type TAnalyticsEvent = zod.infer<typeof AnalyticsEventSchema>;
+export type TNewAnalyticsEvent = zod.infer<typeof NewAnalyticsEventSchema>;
+
+// Project Statistics types
+export const ProjectStatSchema = createSelectSchema(projectStats);
+export type TProjectStat = zod.infer<typeof ProjectStatSchema>;
+
+// Relations for payout logs
+export const payoutLogsRelations = relations(payoutLogsSchema, ({ one }) => ({
+  payout: one(payoutsSchema, {
+    fields: [payoutLogsSchema.payoutId],
+    references: [payoutsSchema.id],
+  }),
+  performer: one(usersSchema, {
+    fields: [payoutLogsSchema.performedBy],
+    references: [usersSchema.id],
+  }),
+}));
+
+// Create Zod schemas for validation
+export const PaymentAccountSchema = createSelectSchema(paymentAccountsSchema);
+export const NewPaymentAccountSchema = createInsertSchema(paymentAccountsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+
+export const PayoutScheduleSchema = createSelectSchema(payoutSchedulesSchema);
+export const NewPayoutScheduleSchema = createInsertSchema(payoutSchedulesSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+
+export const PayoutSchema = createSelectSchema(payoutsSchema);
+export const NewPayoutSchema = createInsertSchema(payoutsSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+}).extend({
+  // Additional validation for new payouts
+  amount: zod.string().regex(/^\d+(\.\d{1,2})?$/, {
+    message: 'Amount must be a valid currency amount with up to 2 decimal places',
+  }),
+  fee: zod.string().regex(/^\d+(\.\d{1,2})?$/, {
+    message: 'Fee must be a valid currency amount with up to 2 decimal places',
+  }),
+  netAmount: zod.string().regex(/^\d+(\.\d{1,2})?$/, {
+    message: 'Net amount must be a valid currency amount with up to 2 decimal places',
+  }),
+});
+
+export const TaxInformationSchema = createSelectSchema(taxInformationSchema);
+export const NewTaxInformationSchema = createInsertSchema(taxInformationSchema).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+}).extend({
+  // Enhanced validation for tax ID based on country
+  taxIdNumber: zod.string().min(8).max(20),
+  taxWithholdingRate: zod.string().regex(/^\d+(\.\d{1,2})?$/, {
+    message: 'Withholding rate must be a valid percentage with up to 2 decimal places',
+  }),
+});
+
+export const PayoutLogSchema = createSelectSchema(payoutLogsSchema);
+export const NewPayoutLogSchema = createInsertSchema(payoutLogsSchema).omit({
+  id: true,
+  createdAt: true,
+});
+
+// TypeScript type definitions
+export type TPaymentAccount = zod.infer<typeof PaymentAccountSchema>;
+export type TNewPaymentAccount = zod.infer<typeof NewPaymentAccountSchema>;
+
+export type TPayoutSchedule = zod.infer<typeof PayoutScheduleSchema>;
+export type TNewPayoutSchedule = zod.infer<typeof NewPayoutScheduleSchema>;
+
+export type TPayout = zod.infer<typeof PayoutSchema>;
+export type TNewPayout = zod.infer<typeof NewPayoutSchema>;
+
+export type TTaxInformation = zod.infer<typeof TaxInformationSchema>;
+export type TNewTaxInformation = zod.infer<typeof NewTaxInformationSchema>;
+
+export type TPayoutLog = zod.infer<typeof PayoutLogSchema>;
+export type TNewPayoutLog = zod.infer<typeof NewPayoutLogSchema>;
