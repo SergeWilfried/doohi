@@ -116,7 +116,7 @@
     "cross-env": "^7.0.3",
     "cssnano": "^7.0.6",
     "dotenv-cli": "^7.4.2",
-    "drizzle-kit": "^0.26.2",
+    "drizzle-kit": "^0.30.5",
     "eslint": "^8.57.1",
     "eslint-plugin-format": "^0.1.2",
     "eslint-plugin-jest-dom": "^5.4.0",

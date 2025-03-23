@@ -15,7 +15,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod';
 import * as zod from 'zod';
 
 // Define enums
@@ -858,6 +858,7 @@ export const analyticsEventsRelations = relations(analyticsEventsSchema, ({ one 
 
 // Category types
 export const CategorySchema = createSelectSchema(categoriesSchema);
+export const UpdateCategorySchema = createUpdateSchema(categoriesSchema);
 export const NewCategorySchema = createInsertSchema(categoriesSchema).omit({
   id: true,
   createdAt: true,
@@ -869,6 +870,7 @@ export type TNewCategory = zod.infer<typeof NewCategorySchema>;
 
 // Tag types
 export const TagSchema = createSelectSchema(tagsSchema);
+export const UpdateTagSchema = createUpdateSchema(tagsSchema);
 export const NewTagSchema = createInsertSchema(tagsSchema).omit({
   id: true,
   createdAt: true,
@@ -880,6 +882,8 @@ export type TNewTag = zod.infer<typeof NewTagSchema>;
 
 // Organization types
 export const OrganizationSchema = createSelectSchema(organizationsSchema);
+export const UpdateOrganizationSchema = createUpdateSchema(organizationsSchema);
+
 export const NewOrganizationSchema = createInsertSchema(organizationsSchema).omit({
   id: true,
   createdAt: true,
@@ -891,6 +895,7 @@ export type TNewOrganization = zod.infer<typeof NewOrganizationSchema>;
 
 // User types
 export const UserSchema = createSelectSchema(usersSchema);
+export const UpdateUserSchema = createUpdateSchema(usersSchema);
 export const NewUserSchema = createInsertSchema(usersSchema).omit({
   id: true,
   createdAt: true,
@@ -903,6 +908,7 @@ export type TNewUser = zod.infer<typeof NewUserSchema>;
 
 // UserFollow types
 export const UserFollowSchema = createSelectSchema(userFollowsSchema);
+export const UpdateUserFollowSchema = createUpdateSchema(userFollowsSchema);
 export const NewUserFollowSchema = createInsertSchema(userFollowsSchema).omit({
   id: true,
   createdAt: true,
@@ -914,6 +920,7 @@ export type TNewUserFollow = zod.infer<typeof NewUserFollowSchema>;
 
 // Publisher types
 export const PublisherSchema = createSelectSchema(publishersSchema);
+export const UpdatePublisherSchema = createUpdateSchema(publishersSchema);
 export const NewPublisherSchema = createInsertSchema(publishersSchema).omit({
   id: true,
   createdAt: true,
@@ -925,6 +932,7 @@ export type TNewPublisher = zod.infer<typeof NewPublisherSchema>;
 
 // Project types
 export const ProjectSchema = createSelectSchema(projectsSchema);
+export const UpdateProjectSchema = createUpdateSchema(projectsSchema);
 export const NewProjectSchema = createInsertSchema(projectsSchema).omit({
   id: true,
   createdAt: true,
@@ -936,6 +944,7 @@ export type TNewProject = zod.infer<typeof NewProjectSchema>;
 
 // ProjectMedia types
 export const ProjectMediaSchema = createSelectSchema(projectMediaSchema);
+export const UpdateProjectMediaSchema = createUpdateSchema(projectMediaSchema);
 export const NewProjectMediaSchema = createInsertSchema(projectMediaSchema).omit({
   id: true,
   createdAt: true,
@@ -947,6 +956,7 @@ export type TNewProjectMedia = zod.infer<typeof NewProjectMediaSchema>;
 
 // ProjectTag types
 export const ProjectTagSchema = createSelectSchema(projectTagsSchema);
+export const UpdateProjectTagSchema = createUpdateSchema(projectTagsSchema);
 export const NewProjectTagSchema = createInsertSchema(projectTagsSchema).omit({
   id: true,
   createdAt: true,
@@ -958,6 +968,7 @@ export type TNewProjectTag = zod.infer<typeof NewProjectTagSchema>;
 
 // Backer types
 export const BackerSchema = createSelectSchema(backersSchema);
+export const UpdateBackerSchema = createUpdateSchema(backersSchema);
 export const NewBackerSchema = createInsertSchema(backersSchema).omit({
   id: true,
   createdAt: true,
@@ -969,6 +980,7 @@ export type TNewBacker = zod.infer<typeof NewBackerSchema>;
 
 // Address types
 export const AddressSchema = createSelectSchema(addressesSchema);
+export const UpdateAddressSchema = createUpdateSchema(addressesSchema);
 export const NewAddressSchema = createInsertSchema(addressesSchema).omit({
   id: true,
   createdAt: true,
@@ -980,6 +992,7 @@ export type TNewAddress = zod.infer<typeof NewAddressSchema>;
 
 // Reward types
 export const RewardSchema = createSelectSchema(rewardsSchema);
+export const UpdateRewardSchema = createUpdateSchema(rewardsSchema);
 export const NewRewardSchema = createInsertSchema(rewardsSchema).omit({
   id: true,
   createdAt: true,
@@ -991,6 +1004,7 @@ export type TNewReward = zod.infer<typeof NewRewardSchema>;
 
 // Comment types
 export const CommentSchema = createSelectSchema(commentsSchema);
+export const UpdateCommentSchema = createUpdateSchema(commentsSchema);
 export const NewCommentSchema = createInsertSchema(commentsSchema).omit({
   id: true,
   createdAt: true,
@@ -1002,6 +1016,8 @@ export type TNewComment = zod.infer<typeof NewCommentSchema>;
 
 // Update types
 export const UpdateSchema = createSelectSchema(updatesSchema);
+/// FIXME
+export const UpdatesSchema = createUpdateSchema(updatesSchema);
 export const NewUpdateSchema = createInsertSchema(updatesSchema).omit({
   id: true,
   createdAt: true,
@@ -1013,6 +1029,8 @@ export type TNewUpdate = zod.infer<typeof NewUpdateSchema>;
 
 // Contribution types
 export const ContributionSchema = createSelectSchema(contributionsSchema);
+export const UpdateContributionSchema = createUpdateSchema(contributionsSchema);
+
 export const NewContributionSchema = createInsertSchema(contributionsSchema).omit({
   id: true,
   createdAt: true,
@@ -1024,6 +1042,7 @@ export type TNewContribution = zod.infer<typeof NewContributionSchema>;
 
 // Notification types
 export const NotificationSchema = createSelectSchema(notificationsSchema);
+export const UpdateNotificationSchema = createUpdateSchema(notificationsSchema);
 export const NewNotificationSchema = createInsertSchema(notificationsSchema).omit({
   id: true,
   createdAt: true,
@@ -1035,6 +1054,7 @@ export type TNewNotification = zod.infer<typeof NewNotificationSchema>;
 
 // AnalyticsEvent types
 export const AnalyticsEventSchema = createSelectSchema(analyticsEventsSchema);
+export const UpdateAnalyticsEventSchema = createUpdateSchema(analyticsEventsSchema);
 export const NewAnalyticsEventSchema = createInsertSchema(analyticsEventsSchema).omit({
   id: true,
   createdAt: true,
@@ -1044,6 +1064,8 @@ export type TNewAnalyticsEvent = zod.infer<typeof NewAnalyticsEventSchema>;
 
 // Project Statistics types
 export const ProjectStatSchema = createSelectSchema(projectStats);
+export const UpdateProjectStatSchema = createUpdateSchema(projectStats);
+
 export type TProjectStat = zod.infer<typeof ProjectStatSchema>;
 
 // Relations for payout logs
@@ -1060,6 +1082,8 @@ export const payoutLogsRelations = relations(payoutLogsSchema, ({ one }) => ({
 
 // Create Zod schemas for validation
 export const PaymentAccountSchema = createSelectSchema(paymentAccountsSchema);
+export const UpdatePaymentAccountSchema = createUpdateSchema(paymentAccountsSchema);
+
 export const NewPaymentAccountSchema = createInsertSchema(paymentAccountsSchema).omit({
   id: true,
   createdAt: true,
@@ -1068,6 +1092,7 @@ export const NewPaymentAccountSchema = createInsertSchema(paymentAccountsSchema)
 });
 
 export const PayoutScheduleSchema = createSelectSchema(payoutSchedulesSchema);
+export const UpdatePayoutScheduleSchema = createUpdateSchema(payoutSchedulesSchema);
 export const NewPayoutScheduleSchema = createInsertSchema(payoutSchedulesSchema).omit({
   id: true,
   createdAt: true,
@@ -1076,6 +1101,7 @@ export const NewPayoutScheduleSchema = createInsertSchema(payoutSchedulesSchema)
 });
 
 export const PayoutSchema = createSelectSchema(payoutsSchema);
+export const UpdatePayoutSchema = createUpdateSchema(payoutsSchema);
 export const NewPayoutSchema = createInsertSchema(payoutsSchema).omit({
   id: true,
   createdAt: true,
@@ -1095,6 +1121,7 @@ export const NewPayoutSchema = createInsertSchema(payoutsSchema).omit({
 });
 
 export const TaxInformationSchema = createSelectSchema(taxInformationSchema);
+export const UpdateTaxInformationSchema = createUpdateSchema(taxInformationSchema);
 export const NewTaxInformationSchema = createInsertSchema(taxInformationSchema).omit({
   id: true,
   createdAt: true,
@@ -1109,6 +1136,7 @@ export const NewTaxInformationSchema = createInsertSchema(taxInformationSchema).
 });
 
 export const PayoutLogSchema = createSelectSchema(payoutLogsSchema);
+export const UpdatePayoutLogSchema = createUpdateSchema(payoutLogsSchema);
 export const NewPayoutLogSchema = createInsertSchema(payoutLogsSchema).omit({
   id: true,
   createdAt: true,
