@@ -24,17 +24,11 @@ async function hasPayoutAccess(user: TUser, payoutPublisherId: string): Promise<
   return false;
 }
 
-// Helper to get current user or throw error
-async function getCurrentUser() {
-  const user = await currentUser();
-  if (!user) { // Fixed the logic - throw when user is null
-    throw new Error('Authentication required');
-  }
-  return user as TUser;
-}
-
 export const createPayout = async (data: TPayout) => {
-  const user = await getCurrentUser();
+  const user = await currentUser();
+  if (!user) {
+    throw new Error('Unauthorized: No user found');
+  }
 
   // Check roles using checkRole utility
   const isAdmin = await checkRole('admin');
@@ -55,7 +49,10 @@ export const createPayout = async (data: TPayout) => {
 };
 
 export const updatePayout = async (data: TPayout) => {
-  const user = await getCurrentUser();
+  const user = await currentUser();
+  if (!user) {
+    throw new Error('Unauthorized: No user found');
+  }
 
   // Check access permissions
   if (!(await hasPayoutAccess(user, data.publisherId))) {
@@ -70,7 +67,10 @@ export const updatePayout = async (data: TPayout) => {
 };
 
 export const getAllPayouts = async () => {
-  const user = await getCurrentUser();
+  const user = await currentUser();
+  if (!user) {
+    throw new Error('Unauthorized: No user found');
+  }
 
   const isAdmin = await checkRole('admin');
   const isPublisher = await checkRole('publisher');
@@ -89,7 +89,10 @@ export const getAllPayouts = async () => {
 };
 
 export const getPayoutById = async (id: string) => {
-  const user = await getCurrentUser();
+  const user = await currentUser();
+  if (!user) {
+    throw new Error('Unauthorized: No user found');
+  }
 
   const payout = await db.select()
     .from(payoutsSchema)
@@ -109,7 +112,10 @@ export const getPayoutById = async (id: string) => {
 };
 
 export const deletePayout = async (id: string) => {
-  const user = await getCurrentUser();
+  const user = await currentUser();
+  if (!user) {
+    throw new Error('Unauthorized: No user found');
+  }
 
   // First get the payout to check permissions
   const payout = await getPayoutById(id);
