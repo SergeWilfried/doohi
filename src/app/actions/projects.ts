@@ -28,7 +28,7 @@ export const getProjects = async () => {
     .select()
     .from(projectsSchema)
     .where(eq(projectsSchema.status, 'active'));
-  const parsed = response.map(() => ProjectSchema.parse(response));
+  const parsed = response.map(item => ProjectSchema.parse(item));
   return parsed;
 };
 // Helper function to check if user has access to projects
