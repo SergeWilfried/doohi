@@ -5,10 +5,9 @@ import { revalidatePath } from 'next/cache';
 
 import { db } from '@/libs/DB';
 import { projectsSchema, type TProject } from '@/models/Schema';
-import type { Project } from '@/types/types';
 
 /// FIXME
-export const createProject = async (data: Project) => {
+export const createProject = async (data: TProject) => {
   await db.insert(projectsSchema).values({ ...data, status: 'active', currency: 'USD', publisherType: 'user' });
   revalidatePath('/projects');
 };

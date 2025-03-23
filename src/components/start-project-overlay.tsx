@@ -1,6 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
 import confetti from 'canvas-confetti';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
@@ -8,14 +7,13 @@ import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 
 import { createProject } from '@/actions/projects';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { projectsSchema } from '@/models/Schema';
-import type { Category, Project } from '@/types/types';
+import type { TProject } from '@/models/Schema';
+import type { Category } from '@/types/types';
 
 type StartProjectOverlayProps = {
   isOpen: boolean;
@@ -37,15 +35,14 @@ export function StartProjectOverlay({ isOpen, onClose }: StartProjectOverlayProp
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Project>({
-    resolver: zodResolver(projectsSchema),
+  } = useForm<TProject>({
     mode: 'onChange',
     criteriaMode: 'all',
     shouldFocusError: true,
     reValidateMode: 'onSubmit',
   });
 
-  const createNewProject: SubmitHandler<Project> = async (data: Project) => {
+  const createNewProject: SubmitHandler<TProject> = async (data: TProject) => {
     await createProject(data);
     confetti({
       particleCount: 100,
@@ -115,9 +112,6 @@ export function StartProjectOverlay({ isOpen, onClose }: StartProjectOverlayProp
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleSubmit(createNewProject)} className="w-full" disabled={!title || !description || !amount || !category}>
-              Create Project
-            </Button>
           </form>
         </div>
       </DialogContent>
