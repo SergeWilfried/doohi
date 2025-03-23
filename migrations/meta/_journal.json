@@ -15,6 +15,13 @@
       "when": 1741441177662,
       "tag": "0001_overjoyed_goblin_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1742729315657,
+      "tag": "0002_naive_ken_ellis",
+      "breakpoints": true
     }
   ]
 }
