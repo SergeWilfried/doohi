@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { revalidateTag } from 'next/cache';
 
 import { db } from '@/libs/DB';
-import { projectsSchema, type TProject } from '@/models/Schema';
+import { ProjectSchema, projectsSchema, type TProject } from '@/models/Schema';
 import { checkRole } from '@/utils/roles';
 
 export const getProject = async (id: string, skipAccessCheck = false) => {
@@ -28,7 +28,8 @@ export const getProjects = async () => {
     .select()
     .from(projectsSchema)
     .where(eq(projectsSchema.status, 'active'));
-  return response;
+  const parsed = response.map(() => ProjectSchema.parse(response));
+  return parsed;
 };
 // Helper function to check if user has access to projects
 async function canAccessProject(projectId?: string) {
