@@ -1,3 +1,11 @@
+## [1.0.3](https://github.com/SergeWilfried/doohi/compare/v1.0.2...v1.0.3) (2025-03-28)
+
+
+### Bug Fixes
+
+* add limit to projects select ([8ebe9a5](https://github.com/SergeWilfried/doohi/commit/8ebe9a554bc9483fd866d8d75c893469baa0e2e0))
+* use neondb ([bec200b](https://github.com/SergeWilfried/doohi/commit/bec200b31cf28d8ad069b0429bf1052a556ff744))
+
 ## [1.0.2](https://github.com/SergeWilfried/doohi/compare/v1.0.1...v1.0.2) (2025-03-28)
 
 
