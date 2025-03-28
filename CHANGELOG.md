@@ -1,3 +1,11 @@
+## [1.0.1](https://github.com/SergeWilfried/doohi/compare/v1.0.0...v1.0.1) (2025-03-28)
+
+
+### Bug Fixes
+
+* merge conflicts ([41ff312](https://github.com/SergeWilfried/doohi/commit/41ff31297fd1040a639749b1a5efce838dfc7548))
+* test db link ([950d83e](https://github.com/SergeWilfried/doohi/commit/950d83e51a7ca202ecd1b850994c3f525ef9318d))
+
 # 1.0.0 (2025-03-28)
 
 
