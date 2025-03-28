@@ -1,3 +1,11 @@
+## [1.0.2](https://github.com/SergeWilfried/doohi/compare/v1.0.1...v1.0.2) (2025-03-28)
+
+
+### Bug Fixes
+
+* use neondb ([959884f](https://github.com/SergeWilfried/doohi/commit/959884fb8059d5e1d69720620b08ebd3996929ce))
+* use neondb ([fb7c080](https://github.com/SergeWilfried/doohi/commit/fb7c08075be75b3f945a7a4dc8d5d06a7084e667))
+
 ## [1.0.1](https://github.com/SergeWilfried/doohi/compare/v1.0.0...v1.0.1) (2025-03-28)
 
 
