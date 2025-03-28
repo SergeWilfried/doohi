@@ -26,8 +26,8 @@ export const getProject = async (id: string, skipAccessCheck = false) => {
 export const getProjects = async () => {
   const response = await db
     .select()
-    .from(projectsSchema)
-    .where(eq(projectsSchema.status, 'active'));
+    .from(projectsSchema);
+    
   const parsed = response.map(item => ProjectSchema.parse(item));
   return parsed;
 };
