@@ -27,7 +27,7 @@ export const getProjects = async () => {
   const response = await db
     .select()
     .from(projectsSchema);
-    
+  console.warn( 'response', response)
   const parsed = response.map(item => ProjectSchema.parse(item));
   return parsed;
 };
