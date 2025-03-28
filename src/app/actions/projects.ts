@@ -23,10 +23,18 @@ export const getProject = async (id: string, skipAccessCheck = false) => {
   }
   return project[0];
 };
-export const getProjects = async () => {
-  const response = await db
+export const getProjects = async (limit?: number,) => {
+  let response;
+  if (!limit) {
+    response = await db
     .select()
     .from(projectsSchema);
+  } else {
+    response = await db
+      .select()
+      .from(projectsSchema)
+      .limit(limit);
+  } 
   console.warn( 'response', response)
   const parsed = response.map(item => ProjectSchema.parse(item));
   return parsed;
