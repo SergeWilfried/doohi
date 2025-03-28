@@ -1,45 +1,42 @@
 import path from 'node:path';
 
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
-import { migrate as migratePg } from 'drizzle-orm/node-postgres/migrator';
-import { drizzle as drizzlePglite, type PgliteDatabase } from 'drizzle-orm/pglite';
-import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator';
+import { neon } from '@neondatabase/serverless';
+import { drizzle, NeonHttpDatabase } from 'drizzle-orm/neon-http';
+import { migrate } from 'drizzle-orm/neon-http/migrator';
 import { PHASE_PRODUCTION_BUILD } from 'next/dist/shared/lib/constants';
-import { Client } from 'pg';
 
 import * as schema from '@/models/Schema';
-
 import { Env } from './Env';
 
-let client;
-let drizzle;
-
-if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
-  client = new Client({
-    connectionString: Env.DATABASE_URL,
-  });
-  await client.connect();
-
-  drizzle = drizzlePg(client, { schema });
-  await migratePg(drizzle, {
+let drizzle_db: NeonHttpDatabase<typeof schema> | undefined;
+const DATABASE_URL = Env.DATABASE_URL!;
+if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && DATABASE_URL) {
+  const sql = neon(DATABASE_URL);
+  drizzle_db = drizzle(sql, { schema });
+  
+  await migrate(drizzle_db, {
     migrationsFolder: path.join(process.cwd(), 'migrations'),
   });
 } else {
   // Stores the db connection in the global scope to prevent multiple instances due to hot reloading with Next.js
-  const global = globalThis as unknown as { client: PGlite; drizzle: PgliteDatabase<typeof schema> };
+  const global = globalThis as unknown as { 
+    drizzle?: NeonHttpDatabase<typeof schema>; 
+  };
 
-  if (!global.client) {
-    global.client = new PGlite();
-    await global.client.waitReady;
-
-    global.drizzle = drizzlePglite(global.client, { schema });
+  if (!global.drizzle) {
+    const sql = neon(DATABASE_URL);
+    global.drizzle = drizzle(sql, { schema });
   }
 
-  drizzle = global.drizzle;
-  await migratePglite(global.drizzle, {
+  drizzle_db = global.drizzle;
+  
+  await migrate(drizzle_db, {
     migrationsFolder: path.join(process.cwd(), 'migrations'),
   });
 }
 
-export const db = drizzle;
+if (!drizzle_db) {
+  throw new Error('Database connection could not be established');
+}
+
+export const db = drizzle_db;
