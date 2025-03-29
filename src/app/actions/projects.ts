@@ -23,6 +23,7 @@ export const getProject = async (id: string, skipAccessCheck = false) => {
   }
   return project[0];
 };
+
 export const getProjects = async (limit?: number) => {
   let response;
   if (!limit) {

@@ -18,8 +18,6 @@ export async function generateMetadata(props: { params: { locale: string } }) {
 const IndexPage = async (props: { params: { locale: string } }) => {
   unstable_setRequestLocale(props.params.locale);
   const projects = await getProjects(8);
-  console.warn( 'parsed response', projects)
-
   return (
     <LandingPageV2 data={projects} />
   );
