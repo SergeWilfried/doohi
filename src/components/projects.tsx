@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import type { TCategory, TProject, TPublisher } from '@/models/Schema';
 
-
 const categoryIcons = {
   'All': LayoutGrid,
   'Education': BookOpen,
@@ -33,8 +32,7 @@ const categoryColors = {
   'Community': 'text-yellow-400',
 };
 
-  export default async function ProjectPage({ project, category, publisher }: { project: TProject, category: TCategory, publisher: TPublisher }) {
-
+export default async function ProjectPage({ project, category, publisher }: { project: TProject; category: TCategory; publisher: TPublisher }) {
   const [isDonationOverlayOpen, setIsDonationOverlayOpen] = useState(false);
 
   if (!project) {
@@ -101,8 +99,8 @@ const categoryColors = {
           donations={984}
         />
         <PublisherCard
-          name={publisher?.name!}
-          description={publisher?.description!}
+          name={publisher?.name ?? 'Unknown Author'}
+          description={publisher?.description ?? 'No description available'}
           totalProjects={publisher?.totalProjects ?? 0}
           totalFundsRaised={Number(publisher?.totalFundsRaised) ?? 0}
           trustScore={publisher?.trustScore ?? 0}
