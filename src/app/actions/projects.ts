@@ -23,12 +23,20 @@ export const getProject = async (id: string, skipAccessCheck = false) => {
   }
   return project[0];
 };
-export const getProjects = async () => {
-  const response = await db
-    .select()
-    .from(projectsSchema)
-    .where(eq(projectsSchema.status, 'active'));
-  const parsed = response.map(() => ProjectSchema.parse(response));
+
+export const getProjects = async (limit?: number) => {
+  let response;
+  if (!limit) {
+    response = await db
+      .select()
+      .from(projectsSchema);
+  } else {
+    response = await db
+      .select()
+      .from(projectsSchema)
+      .limit(limit);
+  }
+  const parsed = response.map(item => ProjectSchema.parse(item));
   return parsed;
 };
 // Helper function to check if user has access to projects
