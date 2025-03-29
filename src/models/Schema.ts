@@ -728,10 +728,6 @@ export const projectsRelations = relations(projectsSchema, ({ one, many }) => ({
     fields: [projectsSchema.publisherId],
     references: [publishersSchema.id],
   }),
-  category: one(categoriesSchema, {
-    fields: [projectsSchema.categoryId],
-    references: [categoriesSchema.id],
-  }),
   media: many(projectMediaSchema),
   projectTags: many(projectTagsSchema),
   rewards: many(rewardsSchema),
