@@ -187,7 +187,7 @@ export const projectsSchema = pgTable(
     status: projectStatusEnum('status').notNull().default('draft'),
     featuredImage: text('featured_image'),
     publisherId: uuid('publisher_id').references(() => publishersSchema.id),
-    categoryId: uuid('category_id').references(() => categoriesSchema.id),
+    category: text('title').notNull(),
     publisherType: publisherTypeEnum('publisher_type').notNull().default('user'),
     featured: boolean('featured').default(false),
     viewCount: integer('view_count').default(0),
@@ -199,7 +199,6 @@ export const projectsSchema = pgTable(
   (table) => {
     return {
       publisherIdIdx: index('idx_projects_publisher_id').on(table.publisherId),
-      categoryIdIdx: index('idx_projects_category_id').on(table.categoryId),
       statusIdx: index('idx_projects_status').on(table.status),
       featuredIdx: index('idx_projects_featured').on(table.featured),
       endDateIdx: index('idx_projects_end_date').on(table.endDate),

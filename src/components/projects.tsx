@@ -1,6 +1,5 @@
 'use client';
 
-import { BookOpen, Cpu, Heart, LayoutGrid, Leaf, Palette, Users } from 'lucide-react';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { useState } from 'react';
@@ -10,29 +9,12 @@ import Donate from '@/components/donations-actions';
 import { PublisherCard } from '@/components/publisher-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { TCategory, TProject, TPublisher } from '@/models/Schema';
+import type { TProject, TPublisher } from '@/models/Schema';
+import { categoryColors, categoryIcons } from '@/types/types';
 
-const categoryIcons = {
-  'All': LayoutGrid,
-  'Education': BookOpen,
-  'Environment': Leaf,
-  'Technology': Cpu,
-  'Arts & Culture': Palette,
-  'Wellness': Heart,
-  'Community': Users,
-};
 
-const categoryColors = {
-  'All': 'text-blue-400',
-  'Education': 'text-purple-400',
-  'Environment': 'text-green-400',
-  'Technology': 'text-cyan-400',
-  'Arts & Culture': 'text-pink-400',
-  'Wellness': 'text-red-400',
-  'Community': 'text-yellow-400',
-};
 
-export default async function ProjectPage({ project, category, publisher }: { project: TProject; category: TCategory; publisher: TPublisher }) {
+export default async function ProjectPage({ project, publisher }: { project: TProject;  publisher: TPublisher }) {
   const [isDonationOverlayOpen, setIsDonationOverlayOpen] = useState(false);
 
   if (!project) {
@@ -40,7 +22,7 @@ export default async function ProjectPage({ project, category, publisher }: { pr
   }
 
   const progress = (Number(project.raised) / Number(project.goal)) * 100;
-  const Icon = categoryIcons[category?.name as keyof typeof categoryIcons];
+  const Icon = categoryIcons[project.category as keyof typeof categoryIcons];
 
   return (
     <div className="space-y-6">
@@ -49,9 +31,9 @@ export default async function ProjectPage({ project, category, publisher }: { pr
           <div className="flex items-center justify-between">
             <CardTitle className="text-3xl">{project.title}</CardTitle>
             <div className="flex items-center">
-              <Icon className={`mr-2 size-6 ${categoryColors[category?.name as keyof typeof categoryColors]}`} />
-              <span className={`text-lg ${categoryColors[category?.name as keyof typeof categoryColors]}`}>
-                {category?.name}
+              <Icon className={`mr-2 size-6 ${categoryColors[project.category as keyof typeof categoryColors]}`} />
+              <span className={`text-lg ${categoryColors[project.category as keyof typeof categoryColors]}`}>
+                {project.category}
               </span>
             </div>
           </div>

@@ -1,39 +1,20 @@
-import { BookOpen, Building2, Cpu, Heart, LayoutGrid, Leaf, Palette, Users } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { TCategory, TProject, TPublisher } from '@/models/Schema';
-
-const categoryIcons = {
-  'All': LayoutGrid,
-  'Education': BookOpen,
-  'Environment': Leaf,
-  'Technology': Cpu,
-  'Arts & Culture': Palette,
-  'Wellness': Heart,
-  'Community': Users,
-};
-
-const categoryColors = {
-  'All': 'text-blue-400',
-  'Education': 'text-purple-400',
-  'Environment': 'text-green-400',
-  'Technology': 'text-cyan-400',
-  'Arts & Culture': 'text-pink-400',
-  'Wellness': 'text-red-400',
-  'Community': 'text-yellow-400',
-};
+import type { TProject, TPublisher } from '@/models/Schema';
+import { categoryIcons, categoryColors, type categoryIcons } from '@/types/types';
 
 
 
-export function ProjectCard({ project, publisher, category }: { project: TProject, publisher: TPublisher, category: TCategory }) {
+export function ProjectCard({ project, publisher }: { project: TProject, publisher: TPublisher }) {
   const progress = (Number(project.raised) / Number(project.goal)) * 100;
   
   // Use the project's category to get the correct icon and color
-  const Icon = categoryIcons[category.name as keyof typeof categoryIcons] || categoryIcons.All;
-  const colorClass = categoryColors[category.name as keyof typeof categoryColors] || categoryColors.All;
+  const Icon = categoryIcons[project.category as keyof typeof categoryIcons] || categoryIcons.All;
+  const colorClass = categoryColors[project.category as keyof typeof categoryColors] || categoryColors.All;
 
   return (
     <Card className="flex h-full flex-col overflow-hidden">
@@ -48,7 +29,7 @@ export function ProjectCard({ project, publisher, category }: { project: TProjec
           <Icon className={`size-5 ${colorClass}`} />
         </div>
         <div className={`absolute left-2 top-2 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white`}>
-          {category.name}
+          {project.category}
         </div>
       </div>
       

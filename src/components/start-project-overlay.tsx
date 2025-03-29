@@ -13,12 +13,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { TProject } from '@/models/Schema';
-import type { Category } from '@/types/types';
 
 type StartProjectOverlayProps = {
   isOpen: boolean;
   onClose: () => void;
-  categories: Category[];
+  categories: string[];
 };
 
 const categories = ['Education', 'Community', 'Technology', 'Environment', 'Arts & Culture', 'Wellness'];

@@ -12,6 +12,40 @@ export type Currency = EnumValues<typeof currencyEnum>;
 export type NotificationType = EnumValues<typeof notificationTypeEnum>;
 export type MediaType = EnumValues<typeof mediaTypeEnum>;
 
+import { AlertCircle,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Cpu,
+  Leaf,
+  Palette,
+  Users, Heart, LayoutGrid } from "lucide-react"
+
+export const statusIcons: Partial<Record<string, React.ComponentType>> = {
+  active: Clock,
+  completed: CheckCircle2,
+  expired: AlertCircle,
+};
+
+export const categoryIcons = {
+  All: LayoutGrid,
+  Education: BookOpen,
+  Environment: Leaf,
+  Technology: Cpu,
+  "Arts & Culture": Palette,
+  Wellness: Heart,
+  Community: Users,
+}
+
+export const categoryColors = {
+  All: "text-blue-400",
+  Education: "text-purple-400",
+  Environment: "text-green-400",
+  Technology: "text-cyan-400",
+  "Arts & Culture": "text-pink-400",
+  Wellness: "text-red-400",
+  Community: "text-yellow-400",
+}
 // Common timestamp fields interface
 export type Timestamps = {
   createdAt: Date;
@@ -34,7 +68,6 @@ export type Tag = {
   name: string;
 } & Timestamps;
 
-export type ProjectCategory = 'Education' | 'Community' | 'Technology' | 'Environment' | 'Arts & Culture' | 'Wellness';
 
 // Organizations
 export type Organization = {
@@ -113,7 +146,7 @@ export type Project = {
   status: ProjectStatus;
   featuredImage: string | null;
   publisherId: string | null;
-  category: ProjectCategory; // Use the specific type here
+  category: string; // Use the specific type here
   categoryId: string | null;
   publisherType: PublisherType;
   featured: boolean;
