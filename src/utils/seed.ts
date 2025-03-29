@@ -675,4 +675,16 @@ async function main() {
     process.exit(1);
   }
 }
+
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Seeding interrupted, cleaning up...');
+  try {
+    await sql.end();
+  } catch (err) {
+    console.error('Error during cleanup:', err);
+  }
+  process.exit(0);
+});
+
 main();
