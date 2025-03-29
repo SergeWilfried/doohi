@@ -10,7 +10,7 @@ import Donate from '@/components/donations-actions';
 import { PublisherCard } from '@/components/publisher-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import projectsData from '@/data/project.json';
+import type { TCategory, TProject, TPublisher } from '@/models/Schema';
 
 const categoryIcons = {
   'All': LayoutGrid,
@@ -32,16 +32,15 @@ const categoryColors = {
   'Community': 'text-yellow-400',
 };
 
-export default function ProjectPage({ params }: { params: { id: string } }) {
+export default async function ProjectPage({ project, category, publisher }: { project: TProject; category: TCategory; publisher: TPublisher }) {
   const [isDonationOverlayOpen, setIsDonationOverlayOpen] = useState(false);
-  const project = projectsData.find(p => p.id === Number.parseInt(params.id));
 
   if (!project) {
     notFound();
   }
 
-  const progress = (project.raised / project.goal) * 100;
-  const Icon = categoryIcons[project.category as keyof typeof categoryIcons];
+  const progress = (Number(project.raised) / Number(project.goal)) * 100;
+  const Icon = categoryIcons[category?.name as keyof typeof categoryIcons];
 
   return (
     <div className="space-y-6">
@@ -50,9 +49,9 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-3xl">{project.title}</CardTitle>
             <div className="flex items-center">
-              <Icon className={`mr-2 size-6 ${categoryColors[project.category as keyof typeof categoryColors]}`} />
-              <span className={`text-lg ${categoryColors[project.category as keyof typeof categoryColors]}`}>
-                {project.category}
+              <Icon className={`mr-2 size-6 ${categoryColors[category?.name as keyof typeof categoryColors]}`} />
+              <span className={`text-lg ${categoryColors[category?.name as keyof typeof categoryColors]}`}>
+                {category?.name}
               </span>
             </div>
           </div>
@@ -60,7 +59,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         <CardContent>
           <div className="relative mx-auto mb-6 h-48 max-w-2xl md:h-64 lg:h-80">
             <Image
-              src={project.imageUrl || '/placeholder.svg'}
+              src={project.featuredImage || '/placeholder.svg'}
               alt={project.title}
               width={800}
               height={400}
@@ -94,18 +93,18 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
       </Card>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Donate
-          amountRaised={project.raised}
-          goal={project.goal}
-          daysLeft={project.daysLeft}
+          amountRaised={Number(project.raised)}
+          goal={Number(project.goal)}
+          daysLeft={project.daysLeft!}
           donations={984}
         />
         <PublisherCard
-          name={project.publisher.name}
-          description={project.publisher.description}
-          totalProjects={project.publisher.totalProjects}
-          totalFundsRaised={project.publisher.totalFundsRaised}
-          trustScore={project.publisher.trustScore}
-          yearFounded={project.publisher.yearFounded}
+          name={publisher?.name ?? 'Unknown Author'}
+          description={publisher?.description ?? 'No description available'}
+          totalProjects={publisher?.totalProjects ?? 0}
+          totalFundsRaised={Number(publisher?.totalFundsRaised) ?? 0}
+          trustScore={publisher?.trustScore ?? 0}
+          yearFounded={publisher?.yearFounded ?? 2000}
         />
       </div>
       <Card>

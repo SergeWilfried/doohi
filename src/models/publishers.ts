@@ -3,7 +3,7 @@ import { and, count, desc, eq, gte, isNull, like } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import type { Publisher } from '@/types/types';
 
-import { publishersSchema } from './Schema';
+import { PublisherSchema, publishersSchema } from './Schema';
 
 // ----------------- Publisher Operations -----------------
 
@@ -22,9 +22,11 @@ export const publisherOperations = {
 
   // Find publisher by ID (excluding soft-deleted records)
   findById: async (id: string) => {
-    return db.query.publishersSchema.findFirst({
+    const response = db.query.publishersSchema.findFirst({
       where: and(eq(publishersSchema.id, id), isNull(publishersSchema.deletedAt)),
     });
+    const parsed = PublisherSchema.parse(response);
+    return parsed;
   },
 
   // Update publisher (only if not deleted)
