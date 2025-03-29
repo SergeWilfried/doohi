@@ -1,25 +1,6 @@
 import { Button } from "@/components/ui/button"
-import { BookOpen, Leaf, Cpu, Palette, Heart, Users, LayoutGrid } from "lucide-react"
+import { categoryColors, categoryIcons } from "@/types/types"
 
-const categoryIcons = {
-  All: LayoutGrid,
-  Education: BookOpen,
-  Environment: Leaf,
-  Technology: Cpu,
-  "Arts & Culture": Palette,
-  Wellness: Heart,
-  Community: Users,
-}
-
-const categoryColors = {
-  All: "text-blue-400",
-  Education: "text-purple-400",
-  Environment: "text-green-400",
-  Technology: "text-cyan-400",
-  "Arts & Culture": "text-pink-400",
-  Wellness: "text-red-400",
-  Community: "text-yellow-400",
-}
 
 interface CategoryFilterProps {
   categories: string[]
@@ -30,7 +11,7 @@ interface CategoryFilterProps {
 export function CategoryFilter({ categories, selectedCategory, onCategoryChange }: CategoryFilterProps) {
   return (
     <div className="flex flex-wrap justify-center gap-2 mb-6">
-      {["All", ...categories].map((category) => {
+      {[...categories].map((category) => {
         const Icon = categoryIcons[category as keyof typeof categoryIcons]
         return (
           <Button

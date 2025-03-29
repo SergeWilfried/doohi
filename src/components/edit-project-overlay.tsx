@@ -1,16 +1,16 @@
 'use client';
 import { useState } from 'react';
 
-import type { Project } from '@/types/types';
 
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import type { TProject } from '@/models/Schema';
 
 type EditProjectProps = {
-  project: Project;
+  project: TProject;
   onClose: () => void;
   onUpdate: (updatedProject: EditProjectProps['project']) => void;
 };

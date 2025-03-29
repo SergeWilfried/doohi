@@ -187,7 +187,7 @@ export const projectsSchema = pgTable(
     status: projectStatusEnum('status').notNull().default('draft'),
     featuredImage: text('featured_image'),
     publisherId: uuid('publisher_id').references(() => publishersSchema.id),
-    categoryId: uuid('category_id').references(() => categoriesSchema.id),
+    category: text('category').notNull(),
     publisherType: publisherTypeEnum('publisher_type').notNull().default('user'),
     featured: boolean('featured').default(false),
     viewCount: integer('view_count').default(0),
@@ -199,7 +199,6 @@ export const projectsSchema = pgTable(
   (table) => {
     return {
       publisherIdIdx: index('idx_projects_publisher_id').on(table.publisherId),
-      categoryIdIdx: index('idx_projects_category_id').on(table.categoryId),
       statusIdx: index('idx_projects_status').on(table.status),
       featuredIdx: index('idx_projects_featured').on(table.featured),
       endDateIdx: index('idx_projects_end_date').on(table.endDate),
@@ -729,10 +728,6 @@ export const projectsRelations = relations(projectsSchema, ({ one, many }) => ({
     fields: [projectsSchema.publisherId],
     references: [publishersSchema.id],
   }),
-  category: one(categoriesSchema, {
-    fields: [projectsSchema.categoryId],
-    references: [categoriesSchema.id],
-  }),
   media: many(projectMediaSchema),
   projectTags: many(projectTagsSchema),
   rewards: many(rewardsSchema),
@@ -856,17 +851,6 @@ export const analyticsEventsRelations = relations(analyticsEventsSchema, ({ one 
   }),
 }));
 
-// Category types
-export const CategorySchema = createSelectSchema(categoriesSchema);
-export const UpdateCategorySchema = createUpdateSchema(categoriesSchema);
-export const NewCategorySchema = createInsertSchema(categoriesSchema).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  deletedAt: true,
-});
-export type TCategory = zod.infer<typeof CategorySchema>;
-export type TNewCategory = zod.infer<typeof NewCategorySchema>;
 
 // Tag types
 export const TagSchema = createSelectSchema(tagsSchema);
