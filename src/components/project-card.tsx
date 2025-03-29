@@ -32,8 +32,8 @@ export function ProjectCard({ project, publisher, category }: { project: TProjec
   const progress = (Number(project.raised) / Number(project.goal)) * 100;
   
   // Use the project's category to get the correct icon and color
-  const Icon = categoryIcons[category?.name] || categoryIcons.All;
-  const colorClass = categoryColors[category.name] || categoryColors.All;
+  const Icon = categoryIcons[category.name as keyof typeof categoryIcons] || categoryIcons.All;
+  const colorClass = categoryColors[category.name as keyof typeof categoryColors] || categoryColors.All;
 
   return (
     <Card className="flex h-full flex-col overflow-hidden">
