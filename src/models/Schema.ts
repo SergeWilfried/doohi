@@ -187,7 +187,7 @@ export const projectsSchema = pgTable(
     status: projectStatusEnum('status').notNull().default('draft'),
     featuredImage: text('featured_image'),
     publisherId: uuid('publisher_id').references(() => publishersSchema.id),
-    category: text('title').notNull(),
+    category: text('category').notNull(),
     publisherType: publisherTypeEnum('publisher_type').notNull().default('user'),
     featured: boolean('featured').default(false),
     viewCount: integer('view_count').default(0),
@@ -855,17 +855,6 @@ export const analyticsEventsRelations = relations(analyticsEventsSchema, ({ one 
   }),
 }));
 
-// Category types
-export const CategorySchema = createSelectSchema(categoriesSchema);
-export const UpdateCategorySchema = createUpdateSchema(categoriesSchema);
-export const NewCategorySchema = createInsertSchema(categoriesSchema).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  deletedAt: true,
-});
-export type TCategory = zod.infer<typeof CategorySchema>;
-export type TNewCategory = zod.infer<typeof NewCategorySchema>;
 
 // Tag types
 export const TagSchema = createSelectSchema(tagsSchema);

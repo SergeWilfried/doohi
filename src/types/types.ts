@@ -53,15 +53,6 @@ export type Timestamps = {
   deletedAt: Date | null;
 };
 
-// Categories
-export type Category = {
-  id: string;
-  name: string;
-  description: string | null;
-  iconUrl: string | null;
-  displayOrder: number | null;
-} & Timestamps;
-
 // Tags
 export type Tag = {
   id: string;

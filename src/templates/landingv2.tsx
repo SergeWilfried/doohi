@@ -19,8 +19,9 @@ export default function LandingPageV2({
   const [isStartProjectOpen, setIsStartProjectOpen] = useState(false);
   const categories = projects.map((project) => (project.category));
   // Filter projects based on selected category.
-  const filteredProjects = projects.filter((project) => project.category === selectedCategory);
-
+  const filteredProjects = selectedCategory === 'All' 
+     ? projects 
+      : projects.filter(project => project.category === selectedCategory);
   return (
     <div className="space-y-12">
       <div className="space-y-4 text-center">
