@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/SergeWilfried/doohi/compare/v1.0.3...v1.1.0) (2025-03-29)
+
+
+### Features
+
+* remove mock data from projectcard ([#27](https://github.com/SergeWilfried/doohi/issues/27)) ([59fc25c](https://github.com/SergeWilfried/doohi/commit/59fc25c3b706714e2efe6f49511144c35058acdb))
+
 ## [1.0.3](https://github.com/SergeWilfried/doohi/compare/v1.0.2...v1.0.3) (2025-03-28)
 
 
