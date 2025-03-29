@@ -13,7 +13,6 @@ const ProjectsIndexPage = async ({ params }: { params: TProject }) => {
         title={t('title_bar')}
         description={t('title_bar_description')}
       />
-
       <ProjectPage project={params} />
     </>
   );
