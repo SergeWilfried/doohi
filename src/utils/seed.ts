@@ -589,7 +589,7 @@ async function seedRewards(projectIds: string[]): Promise<string[]> {
   return rewards.map(r => r.id);
 }
 
-async function seedContributions(backerIds: string[], projectIds: string[], rewardIds: string[], addressIds: string[]): Promise<void> {
+async function seedContributions(backerIds: string[], projectIds: string[], _rewardIds: string[], addressIds: string[]): Promise<void> {
   const contributions = [];
   const paymentStatuses = ['pending', 'completed', 'failed', 'refunded'];
   
