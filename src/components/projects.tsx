@@ -10,9 +10,8 @@ import Donate from '@/components/donations-actions';
 import { PublisherCard } from '@/components/publisher-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { TProject } from '@/models/Schema';
-import { categoryOperations } from '@/models/categories';
-import { publisherOperations } from '@/models/publishers';
+import type { TCategory, TProject, TPublisher } from '@/models/Schema';
+
 
 const categoryIcons = {
   'All': LayoutGrid,
@@ -34,11 +33,8 @@ const categoryColors = {
   'Community': 'text-yellow-400',
 };
 
-  export default async function ProjectPage({ project }: { project: TProject }) {
-    const categoryId = project.categoryId!
-    const publisherId = project.publisherId!
-    const category = await categoryOperations.findById(categoryId)
-    const author = await publisherOperations.findById(publisherId)
+  export default async function ProjectPage({ project, category, publisher }: { project: TProject, category: TCategory, publisher: TPublisher }) {
+
   const [isDonationOverlayOpen, setIsDonationOverlayOpen] = useState(false);
 
   if (!project) {
@@ -105,12 +101,12 @@ const categoryColors = {
           donations={984}
         />
         <PublisherCard
-          name={author?.name!}
-          description={author?.description!}
-          totalProjects={author?.totalProjects ?? 0}
-          totalFundsRaised={Number(author?.totalFundsRaised) ?? 0}
-          trustScore={author?.trustScore ?? 0}
-          yearFounded={author?.yearFounded ?? 2000}
+          name={publisher?.name!}
+          description={publisher?.description!}
+          totalProjects={publisher?.totalProjects ?? 0}
+          totalFundsRaised={Number(publisher?.totalFundsRaised) ?? 0}
+          trustScore={publisher?.trustScore ?? 0}
+          yearFounded={publisher?.yearFounded ?? 2000}
         />
       </div>
       <Card>

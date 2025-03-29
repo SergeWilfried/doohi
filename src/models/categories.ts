@@ -3,7 +3,7 @@ import { and, asc, count, eq, isNull } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import type { Category } from '@/types/types';
 
-import { categoriesSchema, projectsSchema } from './Schema';
+import { categoriesSchema, CategorySchema, projectsSchema } from './Schema';
 
 // ----------------- Category Operations -----------------
 
@@ -15,9 +15,11 @@ export const categoryOperations = {
 
   // Find category by ID
   findById: async (id: string) => {
-    return db.query.categoriesSchema.findFirst({
+    const response = db.query.categoriesSchema.findFirst({
       where: eq(categoriesSchema.id, id),
     });
+    const parsed = CategorySchema.parse(response);
+    return parsed;
   },
 
   // Update category
